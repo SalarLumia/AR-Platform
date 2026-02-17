@@ -11,44 +11,50 @@
     :root{
       --bg1:#070A12;
       --bg2:#0B1230;
-      --glass: rgba(255,255,255,.10);
+      --glass: rgba(255,255,255,.11);
       --glass2: rgba(255,255,255,.06);
       --stroke: rgba(255,255,255,.16);
+      --stroke2: rgba(255,255,255,.22);
       --text: rgba(255,255,255,.92);
       --muted: rgba(255,255,255,.62);
       --shadow: 0 18px 60px rgba(0,0,0,.55);
+      --shadow2: 0 30px 110px rgba(0,0,0,.70);
       --blur: blur(18px);
+      --blur2: blur(26px);
       --r: 22px;
+      --r2: 26px;
     }
 
     *{ box-sizing:border-box; }
     html,body{ height:100%; margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#000; color:var(--text); }
 
-    /* Liquid glass background */
+    /* Vision-pro-ish liquid background */
     .bg{
       position: fixed; inset: 0; overflow:hidden;
       background:
-        radial-gradient(1200px 800px at 20% 15%, rgba(120,170,255,.22), transparent 60%),
-        radial-gradient(900px 700px at 80% 30%, rgba(190,120,255,.18), transparent 60%),
-        radial-gradient(900px 700px at 40% 85%, rgba(100,255,210,.14), transparent 60%),
+        radial-gradient(1200px 800px at 18% 14%, rgba(120,170,255,.24), transparent 60%),
+        radial-gradient(1000px 820px at 82% 26%, rgba(190,120,255,.20), transparent 60%),
+        radial-gradient(1000px 800px at 42% 88%, rgba(100,255,210,.16), transparent 60%),
         linear-gradient(180deg, var(--bg1), var(--bg2));
+      transform: translate3d(0,0,0);
     }
     .orb{
-      position:absolute; width: 420px; height: 420px; border-radius: 50%;
-      filter: blur(1px);
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.35), rgba(255,255,255,.06) 38%, rgba(255,255,255,0) 68%);
-      box-shadow: 0 0 80px rgba(255,255,255,.08);
+      position:absolute; border-radius: 50%;
+      background: radial-gradient(circle at 28% 28%, rgba(255,255,255,.38), rgba(255,255,255,.08) 40%, rgba(255,255,255,0) 70%);
+      box-shadow: 0 0 90px rgba(255,255,255,.08);
       mix-blend-mode: screen;
-      opacity: .85;
-      animation: float 10s ease-in-out infinite;
+      opacity: .88;
+      filter: blur(.6px);
+      will-change: transform;
     }
-    .orb.o1{ left:-120px; top:-140px; animation-duration: 12s; }
-    .orb.o2{ right:-160px; top:140px; width:520px; height:520px; animation-duration: 14s; }
-    .orb.o3{ left:30%; bottom:-220px; width:620px; height:620px; animation-duration: 16s; opacity:.7; }
+    .orb.o1{ width:420px; height:420px; left:-120px; top:-140px; }
+    .orb.o2{ width:560px; height:560px; right:-190px; top:120px; opacity:.78; }
+    .orb.o3{ width:680px; height:680px; left:28%; bottom:-260px; opacity:.66; }
 
-    @keyframes float{
-      0%,100%{ transform: translate3d(0,0,0) scale(1); }
-      50%{ transform: translate3d(18px,-14px,0) scale(1.03); }
+    /* Parallax layers (we move these subtly with JS) */
+    .parallax{
+      position:absolute; inset:0;
+      will-change: transform;
     }
 
     .wrap{
@@ -59,9 +65,8 @@
       padding: 24px;
     }
 
-    /* Glass card */
     .card{
-      width: min(520px, 92vw);
+      width: min(560px, 92vw);
       border-radius: var(--r);
       background: linear-gradient(180deg, var(--glass), var(--glass2));
       border: 1px solid var(--stroke);
@@ -75,18 +80,18 @@
       font-size: 18px;
       letter-spacing: .2px;
       margin: 0 0 6px 0;
-      color: var(--text);
     }
     .sub{
       margin: 0 0 16px 0;
       color: var(--muted);
       font-size: 13px;
-      line-height: 1.4;
+      line-height: 1.45;
     }
 
-    /* Main CTA button (liquid glass) */
+    .row{ display:flex; gap:10px; flex-wrap:wrap; }
+
     .btn{
-      width: 100%;
+      flex: 1 1 240px;
       border: 1px solid rgba(255,255,255,.22);
       border-radius: 16px;
       padding: 14px 16px;
@@ -95,9 +100,7 @@
       background:
         radial-gradient(120% 140% at 20% 10%, rgba(255,255,255,.24), rgba(255,255,255,.06) 55%, rgba(255,255,255,.02)),
         linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
-      box-shadow:
-        0 10px 30px rgba(0,0,0,.35),
-        inset 0 1px 0 rgba(255,255,255,.20);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.20);
       backdrop-filter: var(--blur);
       -webkit-backdrop-filter: var(--blur);
       display:flex;
@@ -107,22 +110,39 @@
       font-size: 16px;
       transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
       user-select:none;
+      min-height: 48px;
     }
     .btn:hover{ transform: translateY(-1px); border-color: rgba(255,255,255,.32); box-shadow: 0 14px 36px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.25); }
     .btn:active{ transform: translateY(0px) scale(.99); }
 
+    .btnIcon{
+      width: 18px; height: 18px; opacity: .9;
+      display:inline-block;
+    }
+
+    .btnSmall{
+      flex: 0 0 auto;
+      padding: 12px 14px;
+      font-size: 14px;
+      border-radius: 14px;
+    }
+
     .pill{
-      display:inline-flex;
+      display:flex;
       align-items:center;
-      padding: 6px 10px;
+      justify-content:space-between;
+      gap: 10px;
+      margin-top: 12px;
+      padding: 10px 12px;
       border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.16);
+      border: 1px solid rgba(255,255,255,.14);
       background: rgba(255,255,255,.06);
       color: rgba(255,255,255,.70);
       font-size: 12px;
-      margin-top: 12px;
-      gap: 8px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
     }
+    .pillLeft{ display:flex; align-items:center; gap:10px; }
     .dot{
       width: 8px; height: 8px; border-radius: 50%;
       background: rgba(255,255,255,.55);
@@ -139,26 +159,19 @@
 
     .overlayBg{
       position:absolute; inset:0;
-      background: rgba(0,0,0,.55);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
+      background: rgba(0,0,0,.52);
+      backdrop-filter: var(--blur2);
+      -webkit-backdrop-filter: var(--blur2);
     }
 
     .viewerShell{
       position:absolute; inset: 18px;
-      border-radius: 26px;
+      border-radius: var(--r2);
       border: 1px solid rgba(255,255,255,.14);
-      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
-      box-shadow: 0 30px 100px rgba(0,0,0,.70);
+      background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.03));
+      box-shadow: var(--shadow2);
       overflow:hidden;
     }
-
-    model-viewer{
-      width: 100%;
-      height: 100%;
-      background: transparent;
-    }
-    model-viewer::part(default-progress-bar){ display:none; }
 
     .topbar{
       position:absolute; left: 14px; right: 14px; top: 14px;
@@ -191,7 +204,83 @@
     }
     .close:hover{ transform: translateY(-1px); border-color: rgba(255,255,255,.28); }
 
-    /* AR button inside model-viewer */
+    /* Model viewer */
+    model-viewer{
+      width: 100%;
+      height: 100%;
+      background: transparent;
+    }
+    model-viewer::part(default-progress-bar){ display:none; }
+
+    /* Premium loader */
+    .loader{
+      position:absolute; inset: 0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index: 10000;
+      pointer-events:none;
+      transition: opacity .35s ease;
+    }
+    .loader.hide{ opacity: 0; }
+    .loaderCard{
+      width: min(520px, 86vw);
+      border-radius: 24px;
+      padding: 18px 18px 16px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+      box-shadow: 0 20px 80px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.18);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+    .loaderTop{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      margin-bottom: 12px;
+    }
+    .loaderTitle{
+      font-size: 13px;
+      color: rgba(255,255,255,.82);
+      letter-spacing: .2px;
+    }
+    .shimmer{
+      height: 12px;
+      width: 140px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(255,255,255,.10), rgba(255,255,255,.24), rgba(255,255,255,.10));
+      background-size: 200% 100%;
+      animation: shimmer 1.25s ease-in-out infinite;
+    }
+    @keyframes shimmer{
+      0%{ background-position: 0% 0; }
+      100%{ background-position: 200% 0; }
+    }
+    .bar{
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+      overflow:hidden;
+    }
+    .barFill{
+      height: 100%;
+      width: 30%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(255,255,255,.22), rgba(255,255,255,.08));
+      animation: loadwave 1.2s ease-in-out infinite;
+    }
+    @keyframes loadwave{
+      0%{ transform: translateX(-40%); width: 35%; }
+      50%{ transform: translateX(60%); width: 55%; }
+      100%{ transform: translateX(140%); width: 35%; }
+    }
+    .loaderHint{
+      margin-top: 10px;
+      font-size: 12px;
+      color: rgba(255,255,255,.62);
+      line-height: 1.35;
+    }
+
+    /* AR button inside viewer */
     .arbtn{
       border: 1px solid rgba(255,255,255,.20);
       background:
@@ -204,26 +293,71 @@
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
     }
+
+    /* Tiny toast */
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      transform: translateX(-50%);
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.08);
+      color: rgba(255,255,255,.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 12px 40px rgba(0,0,0,.45);
+      z-index: 20000;
+      opacity: 0;
+      pointer-events:none;
+      transition: opacity .22s ease, transform .22s ease;
+    }
+    .toast.show{
+      opacity: 1;
+      transform: translateX(-50%) translateY(-4px);
+    }
+
+    /* Reduce motion */
+    @media (prefers-reduced-motion: reduce){
+      .shimmer, .barFill { animation: none !important; }
+    }
   </style>
 </head>
 
 <body>
   <div class="bg" aria-hidden="true">
-    <div class="orb o1"></div>
-    <div class="orb o2"></div>
-    <div class="orb o3"></div>
+    <div id="parallax" class="parallax">
+      <div class="orb o1"></div>
+      <div class="orb o2"></div>
+      <div class="orb o3"></div>
+    </div>
   </div>
 
   <main class="wrap">
     <section class="card" role="region" aria-label="3D viewer launcher">
       <h1 class="title">3D Preview</h1>
-      <p class="sub">Open the model in a smooth 3D viewer. If AR is supported on your device, you’ll also get an AR button.</p>
+      <p class="sub">Tap to open a glass-smooth 3D viewer. If AR is supported, you’ll also see an AR button.</p>
 
-      <button id="openBtn" class="btn">
-        View in 3D
-      </button>
+      <div class="row">
+        <button id="openBtn" class="btn" title="Open 3D viewer">
+          <span class="btnIcon">◈</span>
+          <span>View in 3D</span>
+        </button>
 
-      <div class="pill"><span class="dot"></span><span>Loads GLB on web, USDZ on iOS AR</span></div>
+        <button id="copyBtn" class="btn btnSmall" title="Copy link">
+          Copy Link
+        </button>
+
+        <button id="shareBtn" class="btn btnSmall" title="Share">
+          Share
+        </button>
+      </div>
+
+      <div class="pill">
+        <div class="pillLeft"><span class="dot"></span><span>Web 3D: GLB • iOS AR: USDZ</span></div>
+        <span id="statusText">Ready</span>
+      </div>
     </section>
   </main>
 
@@ -233,7 +367,19 @@
     <div class="viewerShell">
       <div class="topbar">
         <div class="chip">Drag to rotate • Scroll/pinch to zoom</div>
-        <button id="closeBtn" class="close">✕</button>
+        <button id="closeBtn" class="close" aria-label="Close">✕</button>
+      </div>
+
+      <!-- Premium loader -->
+      <div id="loader" class="loader">
+        <div class="loaderCard">
+          <div class="loaderTop">
+            <div class="loaderTitle">Loading model</div>
+            <div class="shimmer" aria-hidden="true"></div>
+          </div>
+          <div class="bar" aria-hidden="true"><div class="barFill"></div></div>
+          <div class="loaderHint">If this is your first time opening, it may take a moment.</div>
+        </div>
       </div>
 
       <model-viewer
@@ -249,6 +395,8 @@
         exposure="1.1"
         interaction-prompt="none"
         loading="eager"
+        touch-action="pan-y"
+        camera-target="auto auto auto"
       >
         <button slot="ar-button" class="arbtn" style="position:absolute;left:16px;bottom:16px;">
           View in AR
@@ -257,22 +405,46 @@
     </div>
   </div>
 
+  <div id="toast" class="toast">Copied</div>
+
   <script>
     const overlay = document.getElementById("overlay");
     const openBtn = document.getElementById("openBtn");
     const closeBtn = document.getElementById("closeBtn");
     const overlayBg = document.getElementById("overlayBg");
+    const mv = document.getElementById("mv");
+    const loader = document.getElementById("loader");
+    const statusText = document.getElementById("statusText");
+
+    const copyBtn = document.getElementById("copyBtn");
+    const shareBtn = document.getElementById("shareBtn");
+    const toast = document.getElementById("toast");
+    const parallax = document.getElementById("parallax");
+
+    function showToast(text){
+      toast.textContent = text;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 1200);
+    }
 
     function openViewer(){
+      statusText.textContent = "Opening…";
+      loader.classList.remove("hide");
+      loader.style.display = "flex";
+
       overlay.classList.add("open");
       overlay.setAttribute("aria-hidden", "false");
       document.body.style.overflow = "hidden";
+
+      // If model is already cached, load may fire quickly; loader will hide on 'load'.
+      statusText.textContent = "Loading…";
     }
 
     function closeViewer(){
       overlay.classList.remove("open");
       overlay.setAttribute("aria-hidden", "true");
       document.body.style.overflow = "";
+      statusText.textContent = "Ready";
     }
 
     openBtn.addEventListener("click", openViewer);
@@ -282,6 +454,94 @@
     window.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && overlay.classList.contains("open")) closeViewer();
     });
+
+    // 1) Premium loading state (hide when model is ready)
+    mv.addEventListener("load", () => {
+      statusText.textContent = "Loaded";
+
+      // Auto-frame / auto-scale: ensure model is nicely framed no matter the export
+      // (model-viewer frames automatically, but this makes it more consistent)
+      try{
+        mv.cameraTarget = "auto auto auto";
+        // A gentle default orbit (not too close)
+        mv.cameraOrbit = "0deg 75deg 2.8m";
+      }catch(_){}
+
+      loader.classList.add("hide");
+      setTimeout(() => { loader.style.display = "none"; }, 380);
+      setTimeout(() => { statusText.textContent = "Ready"; }, 900);
+    });
+
+    mv.addEventListener("error", () => {
+      statusText.textContent = "Load failed";
+      loader.classList.add("hide");
+      setTimeout(() => { loader.style.display = "none"; }, 380);
+      showToast("Model failed to load");
+    });
+
+    // 2) Copy link + Share
+    const pageUrl = () => location.href.split("#")[0];
+
+    copyBtn.addEventListener("click", async () => {
+      try{
+        await navigator.clipboard.writeText(pageUrl());
+        showToast("Link copied");
+      }catch(e){
+        // Fallback
+        const ta = document.createElement("textarea");
+        ta.value = pageUrl();
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+        showToast("Link copied");
+      }
+    });
+
+    shareBtn.addEventListener("click", async () => {
+      const url = pageUrl();
+      if (navigator.share){
+        try{
+          await navigator.share({ title: "3D Viewer", text: "Open the 3D model", url });
+        }catch(_){}
+      }else{
+        // fallback to copy
+        try{
+          await navigator.clipboard.writeText(url);
+          showToast("Share not available — link copied");
+        }catch(_){
+          showToast("Share not available");
+        }
+      }
+    });
+
+    // 3) Subtle parallax (mouse + device tilt)
+    let px = 0, py = 0;
+    function applyParallax(){
+      // small values = subtle
+      parallax.style.transform = `translate3d(${px}px, ${py}px, 0)`;
+    }
+
+    // Desktop mouse parallax
+    window.addEventListener("mousemove", (e) => {
+      const cx = window.innerWidth / 2;
+      const cy = window.innerHeight / 2;
+      const dx = (e.clientX - cx) / cx;
+      const dy = (e.clientY - cy) / cy;
+      px = dx * 10;
+      py = dy * 8;
+      applyParallax();
+    }, { passive: true });
+
+    // Mobile tilt parallax (optional)
+    window.addEventListener("deviceorientation", (e) => {
+      // gamma: left/right, beta: front/back
+      const g = Math.max(-30, Math.min(30, e.gamma || 0));
+      const b = Math.max(-30, Math.min(30, e.beta || 0));
+      px = (g / 30) * 10;
+      py = (b / 30) * 6;
+      applyParallax();
+    }, { passive: true });
   </script>
 </body>
 </html>
