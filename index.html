@@ -14,7 +14,6 @@
       --glass: rgba(255,255,255,.11);
       --glass2: rgba(255,255,255,.06);
       --stroke: rgba(255,255,255,.16);
-      --stroke2: rgba(255,255,255,.22);
       --text: rgba(255,255,255,.92);
       --muted: rgba(255,255,255,.62);
       --shadow: 0 18px 60px rgba(0,0,0,.55);
@@ -261,17 +260,15 @@
       border: 1px solid rgba(255,255,255,.12);
       overflow:hidden;
     }
+    /* FIX: real progress-driven bar (no fake wave animation) */
     .barFill{
       height: 100%;
-      width: 30%;
+      width: 100%;
       border-radius: 999px;
-      background: linear-gradient(90deg, rgba(255,255,255,.22), rgba(255,255,255,.08));
-      animation: loadwave 1.2s ease-in-out infinite;
-    }
-    @keyframes loadwave{
-      0%{ transform: translateX(-40%); width: 35%; }
-      50%{ transform: translateX(60%); width: 55%; }
-      100%{ transform: translateX(140%); width: 35%; }
+      background: linear-gradient(90deg, rgba(255,255,255,.26), rgba(255,255,255,.10));
+      transform: scaleX(0.02);
+      transform-origin: left center;
+      transition: transform .15s linear;
     }
     .loaderHint{
       margin-top: 10px;
@@ -320,7 +317,7 @@
 
     /* Reduce motion */
     @media (prefers-reduced-motion: reduce){
-      .shimmer, .barFill { animation: none !important; }
+      .shimmer { animation: none !important; }
     }
   </style>
 </head>
@@ -377,7 +374,7 @@
             <div class="loaderTitle">Loading model</div>
             <div class="shimmer" aria-hidden="true"></div>
           </div>
-          <div class="bar" aria-hidden="true"><div class="barFill"></div></div>
+          <div class="bar" aria-hidden="true"><div id="barFill" class="barFill"></div></div>
           <div class="loaderHint">If this is your first time opening, it may take a moment.</div>
         </div>
       </div>
@@ -389,7 +386,8 @@
         alt="3D model"
         camera-controls
         ar
-        ar-modes="webxr scene-viewer quick-look"
+        <!-- FIX: prioritize iOS Quick Look -->
+        ar-modes="quick-look scene-viewer webxr"
         environment-image="neutral"
         shadow-intensity="0.6"
         exposure="1.1"
@@ -421,6 +419,14 @@
     const toast = document.getElementById("toast");
     const parallax = document.getElementById("parallax");
 
+    const barFill = document.getElementById("barFill");
+
+    // FIX: make model URLs absolute (more reliable for iOS Quick Look)
+    const glbAbs = new URL("./models/model.glb", location.href).href;
+    const usdzAbs = new URL("./models/model.usdz", location.href).href;
+    mv.setAttribute("src", glbAbs);
+    mv.setAttribute("ios-src", usdzAbs);
+
     function showToast(text){
       toast.textContent = text;
       toast.classList.add("show");
@@ -429,6 +435,10 @@
 
     function openViewer(){
       statusText.textContent = "Opening…";
+
+      // FIX: reset real progress bar on open
+      if (barFill) barFill.style.transform = "scaleX(0.02)";
+
       loader.classList.remove("hide");
       loader.style.display = "flex";
 
@@ -436,7 +446,6 @@
       overlay.setAttribute("aria-hidden", "false");
       document.body.style.overflow = "hidden";
 
-      // If model is already cached, load may fire quickly; loader will hide on 'load'.
       statusText.textContent = "Loading…";
     }
 
@@ -455,15 +464,19 @@
       if (e.key === "Escape" && overlay.classList.contains("open")) closeViewer();
     });
 
+    // FIX: bind loader to real load progress
+    mv.addEventListener("progress", (e) => {
+      const p = Math.max(0.02, Math.min(1, e.detail.totalProgress || 0));
+      if (barFill) barFill.style.transform = `scaleX(${p})`;
+    });
+
     // 1) Premium loading state (hide when model is ready)
     mv.addEventListener("load", () => {
       statusText.textContent = "Loaded";
 
-      // Auto-frame / auto-scale: ensure model is nicely framed no matter the export
-      // (model-viewer frames automatically, but this makes it more consistent)
+      // Auto-frame / auto-scale: consistent framing
       try{
         mv.cameraTarget = "auto auto auto";
-        // A gentle default orbit (not too close)
         mv.cameraOrbit = "0deg 75deg 2.8m";
       }catch(_){}
 
@@ -487,7 +500,6 @@
         await navigator.clipboard.writeText(pageUrl());
         showToast("Link copied");
       }catch(e){
-        // Fallback
         const ta = document.createElement("textarea");
         ta.value = pageUrl();
         document.body.appendChild(ta);
@@ -505,7 +517,6 @@
           await navigator.share({ title: "3D Viewer", text: "Open the 3D model", url });
         }catch(_){}
       }else{
-        // fallback to copy
         try{
           await navigator.clipboard.writeText(url);
           showToast("Share not available — link copied");
@@ -518,11 +529,9 @@
     // 3) Subtle parallax (mouse + device tilt)
     let px = 0, py = 0;
     function applyParallax(){
-      // small values = subtle
       parallax.style.transform = `translate3d(${px}px, ${py}px, 0)`;
     }
 
-    // Desktop mouse parallax
     window.addEventListener("mousemove", (e) => {
       const cx = window.innerWidth / 2;
       const cy = window.innerHeight / 2;
@@ -533,9 +542,7 @@
       applyParallax();
     }, { passive: true });
 
-    // Mobile tilt parallax (optional)
     window.addEventListener("deviceorientation", (e) => {
-      // gamma: left/right, beta: front/back
       const g = Math.max(-30, Math.min(30, e.gamma || 0));
       const b = Math.max(-30, Math.min(30, e.beta || 0));
       px = (g / 30) * 10;
