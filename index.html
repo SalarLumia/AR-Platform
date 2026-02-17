@@ -8,61 +8,268 @@
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 
   <style>
-    html, body { height: 100%; margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
-    .wrap { height: 100%; display: grid; place-items: center; background: #0b0b0b; }
-    button { border: 0; padding: 14px 18px; border-radius: 12px; cursor: pointer; font-size: 16px; }
+    :root{
+      --bg1:#070A12;
+      --bg2:#0B1230;
+      --glass: rgba(255,255,255,.10);
+      --glass2: rgba(255,255,255,.06);
+      --stroke: rgba(255,255,255,.16);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.62);
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+      --blur: blur(18px);
+      --r: 22px;
+    }
 
-    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: none; z-index: 9999; }
-    .overlay.open { display: block; }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#000; color:var(--text); }
 
-    model-viewer { width: 100%; height: 100%; }
+    /* Liquid glass background */
+    .bg{
+      position: fixed; inset: 0; overflow:hidden;
+      background:
+        radial-gradient(1200px 800px at 20% 15%, rgba(120,170,255,.22), transparent 60%),
+        radial-gradient(900px 700px at 80% 30%, rgba(190,120,255,.18), transparent 60%),
+        radial-gradient(900px 700px at 40% 85%, rgba(100,255,210,.14), transparent 60%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+    }
+    .orb{
+      position:absolute; width: 420px; height: 420px; border-radius: 50%;
+      filter: blur(1px);
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.35), rgba(255,255,255,.06) 38%, rgba(255,255,255,0) 68%);
+      box-shadow: 0 0 80px rgba(255,255,255,.08);
+      mix-blend-mode: screen;
+      opacity: .85;
+      animation: float 10s ease-in-out infinite;
+    }
+    .orb.o1{ left:-120px; top:-140px; animation-duration: 12s; }
+    .orb.o2{ right:-160px; top:140px; width:520px; height:520px; animation-duration: 14s; }
+    .orb.o3{ left:30%; bottom:-220px; width:620px; height:620px; animation-duration: 16s; opacity:.7; }
 
-    .close { position: fixed; top: 14px; right: 14px; z-index: 10000; border-radius: 999px; padding: 10px 12px; }
+    @keyframes float{
+      0%,100%{ transform: translate3d(0,0,0) scale(1); }
+      50%{ transform: translate3d(18px,-14px,0) scale(1.03); }
+    }
 
-    model-viewer::part(default-progress-bar) { display: none; }
+    .wrap{
+      position: relative;
+      height:100%;
+      display:grid;
+      place-items:center;
+      padding: 24px;
+    }
+
+    /* Glass card */
+    .card{
+      width: min(520px, 92vw);
+      border-radius: var(--r);
+      background: linear-gradient(180deg, var(--glass), var(--glass2));
+      border: 1px solid var(--stroke);
+      box-shadow: var(--shadow);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+      padding: 22px;
+    }
+
+    .title{
+      font-size: 18px;
+      letter-spacing: .2px;
+      margin: 0 0 6px 0;
+      color: var(--text);
+    }
+    .sub{
+      margin: 0 0 16px 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    /* Main CTA button (liquid glass) */
+    .btn{
+      width: 100%;
+      border: 1px solid rgba(255,255,255,.22);
+      border-radius: 16px;
+      padding: 14px 16px;
+      cursor: pointer;
+      color: var(--text);
+      background:
+        radial-gradient(120% 140% at 20% 10%, rgba(255,255,255,.24), rgba(255,255,255,.06) 55%, rgba(255,255,255,.02)),
+        linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+      box-shadow:
+        0 10px 30px rgba(0,0,0,.35),
+        inset 0 1px 0 rgba(255,255,255,.20);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 10px;
+      font-size: 16px;
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+      user-select:none;
+    }
+    .btn:hover{ transform: translateY(-1px); border-color: rgba(255,255,255,.32); box-shadow: 0 14px 36px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.25); }
+    .btn:active{ transform: translateY(0px) scale(.99); }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.70);
+      font-size: 12px;
+      margin-top: 12px;
+      gap: 8px;
+    }
+    .dot{
+      width: 8px; height: 8px; border-radius: 50%;
+      background: rgba(255,255,255,.55);
+      box-shadow: 0 0 16px rgba(255,255,255,.25);
+    }
+
+    /* Overlay viewer */
+    .overlay{
+      position: fixed; inset: 0;
+      display:none;
+      z-index: 9999;
+    }
+    .overlay.open{ display:block; }
+
+    .overlayBg{
+      position:absolute; inset:0;
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .viewerShell{
+      position:absolute; inset: 18px;
+      border-radius: 26px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      box-shadow: 0 30px 100px rgba(0,0,0,.70);
+      overflow:hidden;
+    }
+
+    model-viewer{
+      width: 100%;
+      height: 100%;
+      background: transparent;
+    }
+    model-viewer::part(default-progress-bar){ display:none; }
+
+    .topbar{
+      position:absolute; left: 14px; right: 14px; top: 14px;
+      display:flex; align-items:center; justify-content:space-between;
+      z-index: 10001;
+      pointer-events:none;
+    }
+    .chip{
+      pointer-events:none;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.08);
+      color: rgba(255,255,255,.72);
+      font-size: 12px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+    .close{
+      pointer-events:auto;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.08);
+      color: rgba(255,255,255,.85);
+      border-radius: 999px;
+      padding: 10px 12px;
+      cursor: pointer;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      transition: transform .18s ease, border-color .18s ease;
+    }
+    .close:hover{ transform: translateY(-1px); border-color: rgba(255,255,255,.28); }
+
+    /* AR button inside model-viewer */
+    .arbtn{
+      border: 1px solid rgba(255,255,255,.20);
+      background:
+        radial-gradient(120% 140% at 20% 10%, rgba(255,255,255,.22), rgba(255,255,255,.06) 55%, rgba(255,255,255,.02));
+      color: rgba(255,255,255,.92);
+      border-radius: 16px;
+      padding: 12px 14px;
+      cursor: pointer;
+      box-shadow: 0 12px 34px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.18);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
   </style>
 </head>
 
 <body>
-  <div class="wrap">
-    <button id="openBtn">View in 3D</button>
+  <div class="bg" aria-hidden="true">
+    <div class="orb o1"></div>
+    <div class="orb o2"></div>
+    <div class="orb o3"></div>
   </div>
 
-  <div id="overlay" class="overlay" aria-hidden="true">
-    <button id="closeBtn" class="close">✕</button>
+  <main class="wrap">
+    <section class="card" role="region" aria-label="3D viewer launcher">
+      <h1 class="title">3D Preview</h1>
+      <p class="sub">Open the model in a smooth 3D viewer. If AR is supported on your device, you’ll also get an AR button.</p>
 
-    <model-viewer
-      id="mv"
-      src="./models/model.glb?v=2"
-      ios-src="./models/model.usdz?v=2"
-      alt="3D model"
-      camera-controls
-      touch-action="pan-y"
-      ar
-      ar-modes="webxr scene-viewer quick-look"
-      loading="eager"
-      exposure="1"
-      shadow-intensity="0.8"
-    >
-      <button slot="ar-button"
-        style="position:absolute;left:16px;bottom:16px;border:0;padding:12px 14px;border-radius:12px;cursor:pointer;">
-        View in AR
+      <button id="openBtn" class="btn">
+        View in 3D
       </button>
-    </model-viewer>
+
+      <div class="pill"><span class="dot"></span><span>Loads GLB on web, USDZ on iOS AR</span></div>
+    </section>
+  </main>
+
+  <div id="overlay" class="overlay" aria-hidden="true">
+    <div class="overlayBg" id="overlayBg"></div>
+
+    <div class="viewerShell">
+      <div class="topbar">
+        <div class="chip">Drag to rotate • Scroll/pinch to zoom</div>
+        <button id="closeBtn" class="close">✕</button>
+      </div>
+
+      <model-viewer
+        id="mv"
+        src="./models/model.glb"
+        ios-src="./models/model.usdz"
+        alt="3D model"
+        camera-controls
+        ar
+        ar-modes="webxr scene-viewer quick-look"
+        environment-image="neutral"
+        shadow-intensity="0.6"
+        exposure="1.1"
+        interaction-prompt="none"
+        loading="eager"
+      >
+        <button slot="ar-button" class="arbtn" style="position:absolute;left:16px;bottom:16px;">
+          View in AR
+        </button>
+      </model-viewer>
+    </div>
   </div>
 
   <script>
     const overlay = document.getElementById("overlay");
     const openBtn = document.getElementById("openBtn");
     const closeBtn = document.getElementById("closeBtn");
+    const overlayBg = document.getElementById("overlayBg");
 
-    function openViewer() {
+    function openViewer(){
       overlay.classList.add("open");
       overlay.setAttribute("aria-hidden", "false");
       document.body.style.overflow = "hidden";
     }
 
-    function closeViewer() {
+    function closeViewer(){
       overlay.classList.remove("open");
       overlay.setAttribute("aria-hidden", "true");
       document.body.style.overflow = "";
@@ -70,6 +277,7 @@
 
     openBtn.addEventListener("click", openViewer);
     closeBtn.addEventListener("click", closeViewer);
+    overlayBg.addEventListener("click", closeViewer);
 
     window.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && overlay.classList.contains("open")) closeViewer();
