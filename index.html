@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>3D Viewer</title>
 
+  <!-- model-viewer -->
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 
   <style>
@@ -15,8 +16,6 @@
       --glassA: rgba(255,255,255,.12);
       --glassB: rgba(255,255,255,.06);
       --strokeA: rgba(255,255,255,.18);
-      --strokeB: rgba(255,255,255,.10);
-
       --text: rgba(255,255,255,.92);
       --muted: rgba(255,255,255,.62);
 
@@ -29,7 +28,6 @@
       --r1: 22px;
       --r2: 28px;
 
-      --pad: 16px;
       --safeTop: env(safe-area-inset-top);
       --safeRight: env(safe-area-inset-right);
       --safeBottom: env(safe-area-inset-bottom);
@@ -46,44 +44,43 @@
       overflow-x:hidden;
     }
 
-    /* Background */
-    .bg{
-      position: fixed; inset: 0; overflow:hidden;
+    /* Live 3D background canvas */
+    #bg3d{
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      display:block;
+      pointer-events:none;
+    }
+
+    /* Soft gradient layer above 3D background for Vision-ish depth */
+    .bgOverlay{
+      position: fixed;
+      inset: 0;
+      z-index: 1;
       background:
-        radial-gradient(1100px 760px at 18% 14%, rgba(120,170,255,.26), transparent 60%),
-        radial-gradient(1000px 760px at 82% 26%, rgba(190,120,255,.22), transparent 60%),
-        radial-gradient(1000px 760px at 42% 88%, rgba(100,255,210,.17), transparent 60%),
-        linear-gradient(180deg, var(--bg1), var(--bg2));
-      transform: translate3d(0,0,0);
+        radial-gradient(1100px 760px at 18% 14%, rgba(120,170,255,.18), transparent 60%),
+        radial-gradient(1000px 760px at 82% 26%, rgba(190,120,255,.16), transparent 60%),
+        radial-gradient(1000px 760px at 42% 88%, rgba(100,255,210,.12), transparent 60%),
+        linear-gradient(180deg, rgba(7,10,18,.75), rgba(11,18,48,.78));
+      pointer-events:none;
     }
-
-    .parallax{ position:absolute; inset:0; will-change: transform; }
-
-    .orb{
-      position:absolute; border-radius: 50%;
-      background: radial-gradient(circle at 28% 28%, rgba(255,255,255,.40), rgba(255,255,255,.10) 42%, rgba(255,255,255,0) 72%);
-      box-shadow: 0 0 110px rgba(255,255,255,.08);
-      mix-blend-mode: screen;
-      filter: blur(.6px);
-      opacity: .88;
-      will-change: transform;
-    }
-    .orb.o1{ width:420px; height:420px; left:-120px; top:-140px; }
-    .orb.o2{ width:560px; height:560px; right:-200px; top:120px; opacity:.78; }
-    .orb.o3{ width:680px; height:680px; left:28%; bottom:-280px; opacity:.66; }
 
     /* Layout */
     .wrap{
       position: relative;
+      z-index: 2;
       min-height: 100%;
       display:grid;
       place-items:center;
       padding: calc(24px + var(--safeTop)) 24px calc(24px + var(--safeBottom));
     }
 
-    /* Vision-style glass card */
+    /* Glass card */
     .card{
-      width: min(600px, 92vw);
+      width: min(640px, 92vw);
       border-radius: var(--r1);
       background: linear-gradient(180deg, var(--glassA), var(--glassB));
       border: 1px solid var(--strokeA);
@@ -94,7 +91,6 @@
       position: relative;
       overflow:hidden;
     }
-    /* highlight sheen */
     .card::before{
       content:"";
       position:absolute; inset:-2px;
@@ -168,6 +164,28 @@
       box-shadow: 0 0 16px rgba(255,255,255,.25);
     }
 
+    /* iOS in-app AR helper panel */
+    .helper{
+      margin-top: 12px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      padding: 12px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      display:none;
+    }
+    .helper.show{ display:block; }
+    .helperTitle{ font-size: 13px; margin: 0 0 6px 0; color: rgba(255,255,255,.86); }
+    .helperText{ margin: 0 0 10px 0; font-size: 12px; color: rgba(255,255,255,.66); line-height: 1.35; }
+    .helperRow{ display:flex; gap:10px; flex-wrap:wrap; }
+    .helperBtn{
+      flex: 1 1 220px;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 14px;
+    }
+
     /* Overlay viewer */
     .overlay{
       position: fixed; inset: 0;
@@ -206,7 +224,7 @@
     .topbar{
       position:absolute;
       left: 14px; right: 14px;
-      top: calc(14px + var(--safeTop) * 0);
+      top: 14px;
       display:flex; align-items:center; justify-content:space-between;
       z-index: 10001;
       pointer-events:none;
@@ -236,14 +254,12 @@
     }
     .close:hover{ transform: translateY(-1px); border-color: rgba(255,255,255,.28); }
 
-    /* Model viewer */
     model-viewer{
       width: 100%;
       height: 100%;
       background: transparent;
       position: relative;
       z-index: 1;
-      /* stops iOS elastic scroll artifacts inside overlay */
       overscroll-behavior: none;
     }
     model-viewer::part(default-progress-bar){ display:none; }
@@ -297,7 +313,6 @@
       border: 1px solid rgba(255,255,255,.12);
       overflow:hidden;
     }
-    /* Real progress-driven bar */
     .barFill{
       height: 100%;
       width: 100%;
@@ -314,7 +329,6 @@
       line-height: 1.35;
     }
 
-    /* AR button */
     .arbtn{
       border: 1px solid rgba(255,255,255,.20);
       background:
@@ -328,7 +342,6 @@
       -webkit-backdrop-filter: blur(16px);
     }
 
-    /* Toast */
     .toast{
       position: fixed;
       left: 50%;
@@ -354,18 +367,16 @@
 
     @media (prefers-reduced-motion: reduce){
       .shimmer { animation: none !important; }
+      #bg3d { display:none; }
+      .bgOverlay { background: linear-gradient(180deg, rgba(7,10,18,.9), rgba(11,18,48,.9)); }
     }
   </style>
 </head>
 
 <body>
-  <div class="bg" aria-hidden="true">
-    <div id="parallax" class="parallax">
-      <div class="orb o1"></div>
-      <div class="orb o2"></div>
-      <div class="orb o3"></div>
-    </div>
-  </div>
+  <!-- live 3D background -->
+  <canvas id="bg3d" aria-hidden="true"></canvas>
+  <div class="bgOverlay" aria-hidden="true"></div>
 
   <main class="wrap">
     <section class="card" role="region" aria-label="3D viewer launcher">
@@ -386,6 +397,18 @@
         <div class="pill">
           <div class="pillLeft"><span class="dot"></span><span>Web 3D: GLB • iOS AR: USDZ</span></div>
           <span id="statusText">Ready</span>
+        </div>
+
+        <!-- iOS in-app helper (shown only when needed) -->
+        <div id="iosHelper" class="helper" role="note" aria-label="AR help for iOS in-app browsers">
+          <p class="helperTitle">AR on iPhone</p>
+          <p class="helperText">
+            Some iOS in-app browsers block Apple AR. For best results, open this page in Safari.
+          </p>
+          <div class="helperRow">
+            <button id="openUsdzBtn" class="btn helperBtn">Open AR (USDZ)</button>
+            <button id="howSafariBtn" class="btn helperBtn btnSmall">How to open Safari</button>
+          </div>
         </div>
       </div>
     </section>
@@ -436,7 +459,10 @@
 
   <div id="toast" class="toast">Copied</div>
 
-  <script>
+  <script type="module">
+    // -----------------------------
+    // UI + model-viewer wiring
+    // -----------------------------
     const overlay = document.getElementById("overlay");
     const openBtn = document.getElementById("openBtn");
     const closeBtn = document.getElementById("closeBtn");
@@ -450,10 +476,12 @@
     const shareBtn = document.getElementById("shareBtn");
 
     const toast = document.getElementById("toast");
-    const parallax = document.getElementById("parallax");
     const barFill = document.getElementById("barFill");
 
-    // Absolute URLs help iOS Quick Look reliability
+    const iosHelper = document.getElementById("iosHelper");
+    const openUsdzBtn = document.getElementById("openUsdzBtn");
+    const howSafariBtn = document.getElementById("howSafariBtn");
+
     const glbAbs = new URL("./models/model.glb", location.href).href;
     const usdzAbs = new URL("./models/model.usdz", location.href).href;
     mv.setAttribute("src", glbAbs);
@@ -462,11 +490,11 @@
     function showToast(text){
       toast.textContent = text;
       toast.classList.add("show");
-      setTimeout(() => toast.classList.remove("show"), 1200);
+      setTimeout(() => toast.classList.remove("show"), 1400);
     }
 
     function openViewer(){
-      statusText.textContent = "Opening…";
+      statusText.textContent = "Loading…";
       if (barFill) barFill.style.transform = "scaleX(0.02)";
       loader.classList.remove("hide");
       loader.style.display = "flex";
@@ -474,8 +502,6 @@
       overlay.classList.add("open");
       overlay.setAttribute("aria-hidden", "false");
       document.body.style.overflow = "hidden";
-
-      statusText.textContent = "Loading…";
     }
 
     function closeViewer(){
@@ -488,19 +514,16 @@
     openBtn.addEventListener("click", openViewer);
     closeBtn.addEventListener("click", closeViewer);
     overlayBg.addEventListener("click", closeViewer);
-
     window.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && overlay.classList.contains("open")) closeViewer();
     });
 
-    // Real progress-driven bar
     mv.addEventListener("progress", (e) => {
       const p = Math.max(0.02, Math.min(1, e.detail.totalProgress || 0));
       if (barFill) barFill.style.transform = `scaleX(${p})`;
     });
 
     mv.addEventListener("load", () => {
-      statusText.textContent = "Loaded";
       try{
         mv.cameraTarget = "auto auto auto";
         mv.cameraOrbit = "0deg 75deg 2.8m";
@@ -508,13 +531,13 @@
 
       loader.classList.add("hide");
       setTimeout(() => { loader.style.display = "none"; }, 380);
-      setTimeout(() => { statusText.textContent = "Ready"; }, 900);
+      statusText.textContent = "Ready";
     });
 
     mv.addEventListener("error", () => {
-      statusText.textContent = "Load failed";
       loader.classList.add("hide");
       setTimeout(() => { loader.style.display = "none"; }, 380);
+      statusText.textContent = "Load failed";
       showToast("Model failed to load");
     });
 
@@ -539,37 +562,169 @@
     shareBtn.addEventListener("click", async () => {
       const url = pageUrl();
       if (navigator.share){
-        try{
-          await navigator.share({ title: "3D Viewer", text: "Open the 3D model", url });
-        }catch(_){}
+        try{ await navigator.share({ title: "3D Viewer", text: "Open the 3D model", url }); }catch(_){}
       }else{
-        try{
-          await navigator.clipboard.writeText(url);
-          showToast("Share not available — link copied");
-        }catch(_){
-          showToast("Share not available");
-        }
+        try{ await navigator.clipboard.writeText(url); showToast("Share not available — link copied"); }catch(_){ showToast("Share not available"); }
       }
     });
 
-    // Subtle parallax (mouse + tilt)
-    let px = 0, py = 0;
-    function applyParallax(){ parallax.style.transform = `translate3d(${px}px, ${py}px, 0)`; }
+    // -----------------------------
+    // iOS in-app AR fallback helper
+    // -----------------------------
+    const ua = navigator.userAgent || "";
+    const isIOS = /iPad|iPhone|iPod/i.test(ua);
+    // common in-app browser tokens
+    const isInApp = /(Instagram|FBAN|FBAV|FBIOS|Line|LinkedInApp|Snapchat|TikTok|Twitter|X\/|Telegram|WhatsApp|GSA|DuckDuckGo)/i.test(ua);
+
+    if (isIOS && isInApp){
+      iosHelper.classList.add("show");
+    }
+
+    openUsdzBtn?.addEventListener("click", () => {
+      // best effort: open the USDZ directly (in Safari this launches Quick Look)
+      window.location.href = usdzAbs;
+    });
+
+    howSafariBtn?.addEventListener("click", () => {
+      showToast("Tap Share → Open in Safari");
+    });
+
+    // -----------------------------
+    // Live 3D background (Three.js)
+    // -----------------------------
+    import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+    import { RoomEnvironment } from "https://unpkg.com/three@0.160.0/examples/jsm/environments/RoomEnvironment.js";
+
+    const canvas = document.getElementById("bg3d");
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      alpha: true,
+      antialias: true,
+      powerPreference: "low-power"
+    });
+    renderer.setClearColor(0x000000, 0);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+    camera.position.set(0, 0, 10);
+
+    // soft environment lighting (Vision-ish)
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+
+    // subtle lights
+    const key = new THREE.DirectionalLight(0xffffff, 0.8);
+    key.position.set(4, 6, 8);
+    scene.add(key);
+    const fill = new THREE.DirectionalLight(0xffffff, 0.35);
+    fill.position.set(-6, -2, 6);
+    scene.add(fill);
+
+    // low poly shapes
+    const geometries = [
+      new THREE.IcosahedronGeometry(0.6, 0),
+      new THREE.BoxGeometry(1.0, 1.0, 1.0),
+      new THREE.SphereGeometry(0.7, 10, 8),
+      new THREE.DodecahedronGeometry(0.65, 0)
+    ];
+
+    // glassy-but-light material (keep it clean)
+    const baseMat = new THREE.MeshPhysicalMaterial({
+      color: new THREE.Color(0xffffff),
+      roughness: 0.25,
+      metalness: 0.05,
+      transmission: 0.55,
+      thickness: 0.6,
+      clearcoat: 0.4,
+      clearcoatRoughness: 0.25,
+      transparent: true,
+      opacity: 0.55
+    });
+
+    const objects = [];
+    const COUNT = 12;
+
+    function rand(a,b){ return a + Math.random()*(b-a); }
+
+    for (let i=0;i<COUNT;i++){
+      const geo = geometries[Math.floor(Math.random()*geometries.length)];
+      const mat = baseMat.clone();
+      // tiny tint variations (still minimal)
+      const t = Math.random();
+      mat.color = new THREE.Color().setHSL(0.58 + t*0.08, 0.35, 0.95);
+      mat.opacity = 0.42 + Math.random()*0.16;
+
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(rand(-6,6), rand(-3.5,3.5), rand(-6,2));
+      mesh.rotation.set(rand(0,Math.PI), rand(0,Math.PI), rand(0,Math.PI));
+      const s = rand(0.55, 1.15);
+      mesh.scale.setScalar(s);
+      scene.add(mesh);
+
+      objects.push({
+        mesh,
+        baseY: mesh.position.y,
+        speed: rand(0.25, 0.65),
+        rot: new THREE.Vector3(rand(-0.25,0.25), rand(-0.35,0.35), rand(-0.2,0.2)),
+        phase: rand(0, Math.PI*2)
+      });
+    }
+
+    // gentle parallax for camera
+    let targetX = 0, targetY = 0;
+    let curX = 0, curY = 0;
 
     window.addEventListener("mousemove", (e) => {
-      const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
-      const dx = (e.clientX - cx) / cx, dy = (e.clientY - cy) / cy;
-      px = dx * 10; py = dy * 8;
-      applyParallax();
-    }, { passive: true });
+      const cx = window.innerWidth/2, cy = window.innerHeight/2;
+      targetX = ((e.clientX - cx)/cx) * 0.6;
+      targetY = ((e.clientY - cy)/cy) * 0.35;
+    }, { passive:true });
 
     window.addEventListener("deviceorientation", (e) => {
       const g = Math.max(-30, Math.min(30, e.gamma || 0));
       const b = Math.max(-30, Math.min(30, e.beta || 0));
-      px = (g / 30) * 10;
-      py = (b / 30) * 6;
-      applyParallax();
-    }, { passive: true });
+      targetX = (g/30) * 0.6;
+      targetY = (b/30) * 0.25;
+    }, { passive:true });
+
+    function resize(){
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.6); // keep it smooth but light
+      renderer.setPixelRatio(dpr);
+      renderer.setSize(w, h, false);
+      camera.aspect = w/h;
+      camera.updateProjectionMatrix();
+    }
+    window.addEventListener("resize", resize);
+    resize();
+
+    let t0 = performance.now();
+    function animate(now){
+      const dt = Math.min(0.033, (now - t0)/1000);
+      t0 = now;
+
+      // smooth camera parallax
+      curX += (targetX - curX) * 0.06;
+      curY += (targetY - curY) * 0.06;
+      camera.position.x = curX;
+      camera.position.y = -curY * 0.6;
+      camera.lookAt(0,0,0);
+
+      const time = now * 0.001;
+
+      for (const o of objects){
+        const m = o.mesh;
+        m.position.y = o.baseY + Math.sin(time*o.speed + o.phase) * 0.25;
+        m.rotation.x += o.rot.x * dt;
+        m.rotation.y += o.rot.y * dt;
+        m.rotation.z += o.rot.z * dt;
+      }
+
+      renderer.render(scene, camera);
+      requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
   </script>
 </body>
 </html>
