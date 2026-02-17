@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>3D Viewer</title>
 
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
@@ -11,119 +11,139 @@
     :root{
       --bg1:#070A12;
       --bg2:#0B1230;
-      --glass: rgba(255,255,255,.11);
-      --glass2: rgba(255,255,255,.06);
-      --stroke: rgba(255,255,255,.16);
+
+      --glassA: rgba(255,255,255,.12);
+      --glassB: rgba(255,255,255,.06);
+      --strokeA: rgba(255,255,255,.18);
+      --strokeB: rgba(255,255,255,.10);
+
       --text: rgba(255,255,255,.92);
       --muted: rgba(255,255,255,.62);
-      --shadow: 0 18px 60px rgba(0,0,0,.55);
-      --shadow2: 0 30px 110px rgba(0,0,0,.70);
-      --blur: blur(18px);
-      --blur2: blur(26px);
-      --r: 22px;
-      --r2: 26px;
+
+      --shadow1: 0 18px 60px rgba(0,0,0,.55);
+      --shadow2: 0 30px 120px rgba(0,0,0,.72);
+
+      --blur1: blur(18px);
+      --blur2: blur(28px);
+
+      --r1: 22px;
+      --r2: 28px;
+
+      --pad: 16px;
+      --safeTop: env(safe-area-inset-top);
+      --safeRight: env(safe-area-inset-right);
+      --safeBottom: env(safe-area-inset-bottom);
+      --safeLeft: env(safe-area-inset-left);
     }
 
     *{ box-sizing:border-box; }
-    html,body{ height:100%; margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#000; color:var(--text); }
+    html,body{
+      height:100%;
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background:#000;
+      color:var(--text);
+      overflow-x:hidden;
+    }
 
-    /* Vision-pro-ish liquid background */
+    /* Background */
     .bg{
       position: fixed; inset: 0; overflow:hidden;
       background:
-        radial-gradient(1200px 800px at 18% 14%, rgba(120,170,255,.24), transparent 60%),
-        radial-gradient(1000px 820px at 82% 26%, rgba(190,120,255,.20), transparent 60%),
-        radial-gradient(1000px 800px at 42% 88%, rgba(100,255,210,.16), transparent 60%),
+        radial-gradient(1100px 760px at 18% 14%, rgba(120,170,255,.26), transparent 60%),
+        radial-gradient(1000px 760px at 82% 26%, rgba(190,120,255,.22), transparent 60%),
+        radial-gradient(1000px 760px at 42% 88%, rgba(100,255,210,.17), transparent 60%),
         linear-gradient(180deg, var(--bg1), var(--bg2));
       transform: translate3d(0,0,0);
     }
+
+    .parallax{ position:absolute; inset:0; will-change: transform; }
+
     .orb{
       position:absolute; border-radius: 50%;
-      background: radial-gradient(circle at 28% 28%, rgba(255,255,255,.38), rgba(255,255,255,.08) 40%, rgba(255,255,255,0) 70%);
-      box-shadow: 0 0 90px rgba(255,255,255,.08);
+      background: radial-gradient(circle at 28% 28%, rgba(255,255,255,.40), rgba(255,255,255,.10) 42%, rgba(255,255,255,0) 72%);
+      box-shadow: 0 0 110px rgba(255,255,255,.08);
       mix-blend-mode: screen;
-      opacity: .88;
       filter: blur(.6px);
+      opacity: .88;
       will-change: transform;
     }
     .orb.o1{ width:420px; height:420px; left:-120px; top:-140px; }
-    .orb.o2{ width:560px; height:560px; right:-190px; top:120px; opacity:.78; }
-    .orb.o3{ width:680px; height:680px; left:28%; bottom:-260px; opacity:.66; }
+    .orb.o2{ width:560px; height:560px; right:-200px; top:120px; opacity:.78; }
+    .orb.o3{ width:680px; height:680px; left:28%; bottom:-280px; opacity:.66; }
 
-    /* Parallax layers (we move these subtly with JS) */
-    .parallax{
-      position:absolute; inset:0;
-      will-change: transform;
-    }
-
+    /* Layout */
     .wrap{
       position: relative;
-      height:100%;
+      min-height: 100%;
       display:grid;
       place-items:center;
-      padding: 24px;
+      padding: calc(24px + var(--safeTop)) 24px calc(24px + var(--safeBottom));
     }
 
+    /* Vision-style glass card */
     .card{
-      width: min(560px, 92vw);
-      border-radius: var(--r);
-      background: linear-gradient(180deg, var(--glass), var(--glass2));
-      border: 1px solid var(--stroke);
-      box-shadow: var(--shadow);
-      backdrop-filter: var(--blur);
-      -webkit-backdrop-filter: var(--blur);
+      width: min(600px, 92vw);
+      border-radius: var(--r1);
+      background: linear-gradient(180deg, var(--glassA), var(--glassB));
+      border: 1px solid var(--strokeA);
+      box-shadow: var(--shadow1);
+      backdrop-filter: var(--blur1);
+      -webkit-backdrop-filter: var(--blur1);
       padding: 22px;
+      position: relative;
+      overflow:hidden;
     }
+    /* highlight sheen */
+    .card::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        radial-gradient(900px 180px at 20% 0%, rgba(255,255,255,.20), transparent 60%),
+        radial-gradient(900px 240px at 85% 10%, rgba(255,255,255,.10), transparent 55%);
+      pointer-events:none;
+      opacity:.85;
+    }
+    .cardInner{ position: relative; }
 
-    .title{
-      font-size: 18px;
-      letter-spacing: .2px;
-      margin: 0 0 6px 0;
-    }
-    .sub{
-      margin: 0 0 16px 0;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.45;
-    }
+    .title{ font-size: 18px; margin: 0 0 6px 0; letter-spacing:.2px; }
+    .sub{ margin: 0 0 16px 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
 
     .row{ display:flex; gap:10px; flex-wrap:wrap; }
 
     .btn{
       flex: 1 1 240px;
+      min-height: 48px;
       border: 1px solid rgba(255,255,255,.22);
       border-radius: 16px;
       padding: 14px 16px;
       cursor: pointer;
       color: var(--text);
       background:
-        radial-gradient(120% 140% at 20% 10%, rgba(255,255,255,.24), rgba(255,255,255,.06) 55%, rgba(255,255,255,.02)),
-        linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
-      box-shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.20);
-      backdrop-filter: var(--blur);
-      -webkit-backdrop-filter: var(--blur);
+        radial-gradient(120% 140% at 20% 10%, rgba(255,255,255,.26), rgba(255,255,255,.07) 55%, rgba(255,255,255,.02)),
+        linear-gradient(180deg, rgba(255,255,255,.11), rgba(255,255,255,.05));
+      box-shadow:
+        0 10px 30px rgba(0,0,0,.35),
+        inset 0 1px 0 rgba(255,255,255,.20);
+      backdrop-filter: var(--blur1);
+      -webkit-backdrop-filter: var(--blur1);
       display:flex;
       align-items:center;
       justify-content:center;
       gap: 10px;
       font-size: 16px;
-      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
       user-select:none;
-      min-height: 48px;
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
     }
-    .btn:hover{ transform: translateY(-1px); border-color: rgba(255,255,255,.32); box-shadow: 0 14px 36px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.25); }
+    .btn:hover{ transform: translateY(-1px); border-color: rgba(255,255,255,.34); box-shadow: 0 14px 40px rgba(0,0,0,.46), inset 0 1px 0 rgba(255,255,255,.24); }
     .btn:active{ transform: translateY(0px) scale(.99); }
+
+    .btnSmall{ flex: 0 0 auto; padding: 12px 14px; font-size: 14px; border-radius: 14px; }
 
     .btnIcon{
       width: 18px; height: 18px; opacity: .9;
       display:inline-block;
-    }
-
-    .btnSmall{
-      flex: 0 0 auto;
-      padding: 12px 14px;
-      font-size: 14px;
-      border-radius: 14px;
+      transform: translateY(-.5px);
     }
 
     .pill{
@@ -164,16 +184,29 @@
     }
 
     .viewerShell{
-      position:absolute; inset: 18px;
+      position:absolute;
+      inset: calc(14px + var(--safeTop)) calc(14px + var(--safeRight)) calc(14px + var(--safeBottom)) calc(14px + var(--safeLeft));
       border-radius: var(--r2);
       border: 1px solid rgba(255,255,255,.14);
       background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.03));
       box-shadow: var(--shadow2);
       overflow:hidden;
     }
+    .viewerShell::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        radial-gradient(900px 220px at 20% 0%, rgba(255,255,255,.18), transparent 60%),
+        radial-gradient(900px 260px at 85% 10%, rgba(255,255,255,.10), transparent 55%);
+      pointer-events:none;
+      opacity:.8;
+      z-index: 2;
+    }
 
     .topbar{
-      position:absolute; left: 14px; right: 14px; top: 14px;
+      position:absolute;
+      left: 14px; right: 14px;
+      top: calc(14px + var(--safeTop) * 0);
       display:flex; align-items:center; justify-content:space-between;
       z-index: 10001;
       pointer-events:none;
@@ -193,7 +226,7 @@
       pointer-events:auto;
       border: 1px solid rgba(255,255,255,.18);
       background: rgba(255,255,255,.08);
-      color: rgba(255,255,255,.85);
+      color: rgba(255,255,255,.90);
       border-radius: 999px;
       padding: 10px 12px;
       cursor: pointer;
@@ -208,6 +241,10 @@
       width: 100%;
       height: 100%;
       background: transparent;
+      position: relative;
+      z-index: 1;
+      /* stops iOS elastic scroll artifacts inside overlay */
+      overscroll-behavior: none;
     }
     model-viewer::part(default-progress-bar){ display:none; }
 
@@ -260,15 +297,15 @@
       border: 1px solid rgba(255,255,255,.12);
       overflow:hidden;
     }
-    /* FIX: real progress-driven bar (no fake wave animation) */
+    /* Real progress-driven bar */
     .barFill{
       height: 100%;
       width: 100%;
       border-radius: 999px;
-      background: linear-gradient(90deg, rgba(255,255,255,.26), rgba(255,255,255,.10));
+      background: linear-gradient(90deg, rgba(255,255,255,.28), rgba(255,255,255,.10));
       transform: scaleX(0.02);
       transform-origin: left center;
-      transition: transform .15s linear;
+      transition: transform .14s linear;
     }
     .loaderHint{
       margin-top: 10px;
@@ -277,7 +314,7 @@
       line-height: 1.35;
     }
 
-    /* AR button inside viewer */
+    /* AR button */
     .arbtn{
       border: 1px solid rgba(255,255,255,.20);
       background:
@@ -291,17 +328,17 @@
       -webkit-backdrop-filter: blur(16px);
     }
 
-    /* Tiny toast */
+    /* Toast */
     .toast{
       position: fixed;
       left: 50%;
-      bottom: 22px;
+      bottom: calc(22px + var(--safeBottom));
       transform: translateX(-50%);
       padding: 10px 12px;
       border-radius: 999px;
       border: 1px solid rgba(255,255,255,.18);
       background: rgba(255,255,255,.08);
-      color: rgba(255,255,255,.85);
+      color: rgba(255,255,255,.88);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       box-shadow: 0 12px 40px rgba(0,0,0,.45);
@@ -315,7 +352,6 @@
       transform: translateX(-50%) translateY(-4px);
     }
 
-    /* Reduce motion */
     @media (prefers-reduced-motion: reduce){
       .shimmer { animation: none !important; }
     }
@@ -333,27 +369,24 @@
 
   <main class="wrap">
     <section class="card" role="region" aria-label="3D viewer launcher">
-      <h1 class="title">3D Preview</h1>
-      <p class="sub">Tap to open a glass-smooth 3D viewer. If AR is supported, you’ll also see an AR button.</p>
+      <div class="cardInner">
+        <h1 class="title">3D Preview</h1>
+        <p class="sub">Tap to open a glass-smooth 3D viewer. If AR is supported, you’ll also see an AR button.</p>
 
-      <div class="row">
-        <button id="openBtn" class="btn" title="Open 3D viewer">
-          <span class="btnIcon">◈</span>
-          <span>View in 3D</span>
-        </button>
+        <div class="row">
+          <button id="openBtn" class="btn" title="Open 3D viewer">
+            <span class="btnIcon">◈</span>
+            <span>View in 3D</span>
+          </button>
 
-        <button id="copyBtn" class="btn btnSmall" title="Copy link">
-          Copy Link
-        </button>
+          <button id="copyBtn" class="btn btnSmall" title="Copy link">Copy Link</button>
+          <button id="shareBtn" class="btn btnSmall" title="Share">Share</button>
+        </div>
 
-        <button id="shareBtn" class="btn btnSmall" title="Share">
-          Share
-        </button>
-      </div>
-
-      <div class="pill">
-        <div class="pillLeft"><span class="dot"></span><span>Web 3D: GLB • iOS AR: USDZ</span></div>
-        <span id="statusText">Ready</span>
+        <div class="pill">
+          <div class="pillLeft"><span class="dot"></span><span>Web 3D: GLB • iOS AR: USDZ</span></div>
+          <span id="statusText">Ready</span>
+        </div>
       </div>
     </section>
   </main>
@@ -367,7 +400,6 @@
         <button id="closeBtn" class="close" aria-label="Close">✕</button>
       </div>
 
-      <!-- Premium loader -->
       <div id="loader" class="loader">
         <div class="loaderCard">
           <div class="loaderTop">
@@ -386,7 +418,6 @@
         alt="3D model"
         camera-controls
         ar
-        <!-- FIX: prioritize iOS Quick Look -->
         ar-modes="quick-look scene-viewer webxr"
         environment-image="neutral"
         shadow-intensity="0.6"
@@ -410,18 +441,19 @@
     const openBtn = document.getElementById("openBtn");
     const closeBtn = document.getElementById("closeBtn");
     const overlayBg = document.getElementById("overlayBg");
+
     const mv = document.getElementById("mv");
     const loader = document.getElementById("loader");
     const statusText = document.getElementById("statusText");
 
     const copyBtn = document.getElementById("copyBtn");
     const shareBtn = document.getElementById("shareBtn");
+
     const toast = document.getElementById("toast");
     const parallax = document.getElementById("parallax");
-
     const barFill = document.getElementById("barFill");
 
-    // FIX: make model URLs absolute (more reliable for iOS Quick Look)
+    // Absolute URLs help iOS Quick Look reliability
     const glbAbs = new URL("./models/model.glb", location.href).href;
     const usdzAbs = new URL("./models/model.usdz", location.href).href;
     mv.setAttribute("src", glbAbs);
@@ -435,10 +467,7 @@
 
     function openViewer(){
       statusText.textContent = "Opening…";
-
-      // FIX: reset real progress bar on open
       if (barFill) barFill.style.transform = "scaleX(0.02)";
-
       loader.classList.remove("hide");
       loader.style.display = "flex";
 
@@ -464,17 +493,14 @@
       if (e.key === "Escape" && overlay.classList.contains("open")) closeViewer();
     });
 
-    // FIX: bind loader to real load progress
+    // Real progress-driven bar
     mv.addEventListener("progress", (e) => {
       const p = Math.max(0.02, Math.min(1, e.detail.totalProgress || 0));
       if (barFill) barFill.style.transform = `scaleX(${p})`;
     });
 
-    // 1) Premium loading state (hide when model is ready)
     mv.addEventListener("load", () => {
       statusText.textContent = "Loaded";
-
-      // Auto-frame / auto-scale: consistent framing
       try{
         mv.cameraTarget = "auto auto auto";
         mv.cameraOrbit = "0deg 75deg 2.8m";
@@ -492,14 +518,14 @@
       showToast("Model failed to load");
     });
 
-    // 2) Copy link + Share
+    // Copy + Share
     const pageUrl = () => location.href.split("#")[0];
 
     copyBtn.addEventListener("click", async () => {
       try{
         await navigator.clipboard.writeText(pageUrl());
         showToast("Link copied");
-      }catch(e){
+      }catch(_){
         const ta = document.createElement("textarea");
         ta.value = pageUrl();
         document.body.appendChild(ta);
@@ -526,19 +552,14 @@
       }
     });
 
-    // 3) Subtle parallax (mouse + device tilt)
+    // Subtle parallax (mouse + tilt)
     let px = 0, py = 0;
-    function applyParallax(){
-      parallax.style.transform = `translate3d(${px}px, ${py}px, 0)`;
-    }
+    function applyParallax(){ parallax.style.transform = `translate3d(${px}px, ${py}px, 0)`; }
 
     window.addEventListener("mousemove", (e) => {
-      const cx = window.innerWidth / 2;
-      const cy = window.innerHeight / 2;
-      const dx = (e.clientX - cx) / cx;
-      const dy = (e.clientY - cy) / cy;
-      px = dx * 10;
-      py = dy * 8;
+      const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
+      const dx = (e.clientX - cx) / cx, dy = (e.clientY - cy) / cy;
+      px = dx * 10; py = dy * 8;
       applyParallax();
     }, { passive: true });
 
