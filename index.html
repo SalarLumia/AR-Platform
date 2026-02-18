@@ -10,21 +10,15 @@
 
   <style>
     :root{
-      --bg1:#070A12;
-      --bg2:#0B1230;
-
       --glassA: rgba(255,255,255,.12);
       --glassB: rgba(255,255,255,.06);
       --strokeA: rgba(255,255,255,.18);
       --text: rgba(255,255,255,.92);
       --muted: rgba(255,255,255,.62);
-
       --shadow1: 0 18px 60px rgba(0,0,0,.55);
       --shadow2: 0 30px 120px rgba(0,0,0,.72);
-
       --blur1: blur(18px);
       --blur2: blur(28px);
-
       --r1: 22px;
       --r2: 28px;
 
@@ -55,7 +49,7 @@
       pointer-events:none;
     }
 
-    /* Soft gradient layer above 3D background for Vision-ish depth */
+    /* Soft overlay above 3D */
     .bgOverlay{
       position: fixed;
       inset: 0;
@@ -68,7 +62,6 @@
       pointer-events:none;
     }
 
-    /* Layout */
     .wrap{
       position: relative;
       z-index: 2;
@@ -78,7 +71,6 @@
       padding: calc(24px + var(--safeTop)) 24px calc(24px + var(--safeBottom));
     }
 
-    /* Glass card */
     .card{
       width: min(640px, 92vw);
       border-radius: var(--r1);
@@ -164,7 +156,7 @@
       box-shadow: 0 0 16px rgba(255,255,255,.25);
     }
 
-    /* iOS in-app AR helper panel */
+    /* iOS in-app helper */
     .helper{
       margin-top: 12px;
       border-radius: 18px;
@@ -179,12 +171,6 @@
     .helperTitle{ font-size: 13px; margin: 0 0 6px 0; color: rgba(255,255,255,.86); }
     .helperText{ margin: 0 0 10px 0; font-size: 12px; color: rgba(255,255,255,.66); line-height: 1.35; }
     .helperRow{ display:flex; gap:10px; flex-wrap:wrap; }
-    .helperBtn{
-      flex: 1 1 220px;
-      border-radius: 14px;
-      padding: 12px 14px;
-      font-size: 14px;
-    }
 
     /* Overlay viewer */
     .overlay{
@@ -209,16 +195,6 @@
       background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.03));
       box-shadow: var(--shadow2);
       overflow:hidden;
-    }
-    .viewerShell::before{
-      content:"";
-      position:absolute; inset:-2px;
-      background:
-        radial-gradient(900px 220px at 20% 0%, rgba(255,255,255,.18), transparent 60%),
-        radial-gradient(900px 260px at 85% 10%, rgba(255,255,255,.10), transparent 55%);
-      pointer-events:none;
-      opacity:.8;
-      z-index: 2;
     }
 
     .topbar{
@@ -250,9 +226,7 @@
       cursor: pointer;
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
-      transition: transform .18s ease, border-color .18s ease;
     }
-    .close:hover{ transform: translateY(-1px); border-color: rgba(255,255,255,.28); }
 
     model-viewer{
       width: 100%;
@@ -264,7 +238,7 @@
     }
     model-viewer::part(default-progress-bar){ display:none; }
 
-    /* Premium loader */
+    /* Loader */
     .loader{
       position:absolute; inset: 0;
       display:flex;
@@ -289,23 +263,7 @@
       display:flex; align-items:center; justify-content:space-between; gap:12px;
       margin-bottom: 12px;
     }
-    .loaderTitle{
-      font-size: 13px;
-      color: rgba(255,255,255,.82);
-      letter-spacing: .2px;
-    }
-    .shimmer{
-      height: 12px;
-      width: 140px;
-      border-radius: 999px;
-      background: linear-gradient(90deg, rgba(255,255,255,.10), rgba(255,255,255,.24), rgba(255,255,255,.10));
-      background-size: 200% 100%;
-      animation: shimmer 1.25s ease-in-out infinite;
-    }
-    @keyframes shimmer{
-      0%{ background-position: 0% 0; }
-      100%{ background-position: 200% 0; }
-    }
+    .loaderTitle{ font-size: 13px; color: rgba(255,255,255,.82); letter-spacing: .2px; }
     .bar{
       height: 10px;
       border-radius: 999px;
@@ -322,17 +280,11 @@
       transform-origin: left center;
       transition: transform .14s linear;
     }
-    .loaderHint{
-      margin-top: 10px;
-      font-size: 12px;
-      color: rgba(255,255,255,.62);
-      line-height: 1.35;
-    }
+    .loaderHint{ margin-top: 10px; font-size: 12px; color: rgba(255,255,255,.62); line-height: 1.35; }
 
     .arbtn{
       border: 1px solid rgba(255,255,255,.20);
-      background:
-        radial-gradient(120% 140% at 20% 10%, rgba(255,255,255,.22), rgba(255,255,255,.06) 55%, rgba(255,255,255,.02));
+      background: radial-gradient(120% 140% at 20% 10%, rgba(255,255,255,.22), rgba(255,255,255,.06) 55%, rgba(255,255,255,.02));
       color: rgba(255,255,255,.92);
       border-radius: 16px;
       padding: 12px 14px;
@@ -364,17 +316,10 @@
       opacity: 1;
       transform: translateX(-50%) translateY(-4px);
     }
-
-    @media (prefers-reduced-motion: reduce){
-      .shimmer { animation: none !important; }
-      #bg3d { display:none; }
-      .bgOverlay { background: linear-gradient(180deg, rgba(7,10,18,.9), rgba(11,18,48,.9)); }
-    }
   </style>
 </head>
 
 <body>
-  <!-- live 3D background -->
   <canvas id="bg3d" aria-hidden="true"></canvas>
   <div class="bgOverlay" aria-hidden="true"></div>
 
@@ -389,7 +334,6 @@
             <span class="btnIcon">◈</span>
             <span>View in 3D</span>
           </button>
-
           <button id="copyBtn" class="btn btnSmall" title="Copy link">Copy Link</button>
           <button id="shareBtn" class="btn btnSmall" title="Share">Share</button>
         </div>
@@ -399,15 +343,12 @@
           <span id="statusText">Ready</span>
         </div>
 
-        <!-- iOS in-app helper (shown only when needed) -->
         <div id="iosHelper" class="helper" role="note" aria-label="AR help for iOS in-app browsers">
           <p class="helperTitle">AR on iPhone</p>
-          <p class="helperText">
-            Some iOS in-app browsers block Apple AR. For best results, open this page in Safari.
-          </p>
+          <p class="helperText">Some iOS in-app browsers block Apple AR. For best results, open this page in Safari.</p>
           <div class="helperRow">
-            <button id="openUsdzBtn" class="btn helperBtn">Open AR (USDZ)</button>
-            <button id="howSafariBtn" class="btn helperBtn btnSmall">How to open Safari</button>
+            <button id="openUsdzBtn" class="btn btnSmall" style="flex:1 1 220px;">Open AR (USDZ)</button>
+            <button id="howSafariBtn" class="btn btnSmall" style="flex:1 1 220px;">How to open Safari</button>
           </div>
         </div>
       </div>
@@ -427,7 +368,6 @@
         <div class="loaderCard">
           <div class="loaderTop">
             <div class="loaderTitle">Loading model</div>
-            <div class="shimmer" aria-hidden="true"></div>
           </div>
           <div class="bar" aria-hidden="true"><div id="barFill" class="barFill"></div></div>
           <div class="loaderHint">If this is your first time opening, it may take a moment.</div>
@@ -459,10 +399,8 @@
 
   <div id="toast" class="toast">Copied</div>
 
-  <script type="module">
-    // -----------------------------
-    // UI + model-viewer wiring
-    // -----------------------------
+  <!-- UI logic (NON-module so it cannot be broken by 3D imports) -->
+  <script>
     const overlay = document.getElementById("overlay");
     const openBtn = document.getElementById("openBtn");
     const closeBtn = document.getElementById("closeBtn");
@@ -514,6 +452,7 @@
     openBtn.addEventListener("click", openViewer);
     closeBtn.addEventListener("click", closeViewer);
     overlayBg.addEventListener("click", closeViewer);
+
     window.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && overlay.classList.contains("open")) closeViewer();
     });
@@ -528,7 +467,6 @@
         mv.cameraTarget = "auto auto auto";
         mv.cameraOrbit = "0deg 75deg 2.8m";
       }catch(_){}
-
       loader.classList.add("hide");
       setTimeout(() => { loader.style.display = "none"; }, 380);
       statusText.textContent = "Ready";
@@ -541,7 +479,6 @@
       showToast("Model failed to load");
     });
 
-    // Copy + Share
     const pageUrl = () => location.href.split("#")[0];
 
     copyBtn.addEventListener("click", async () => {
@@ -568,163 +505,168 @@
       }
     });
 
-    // -----------------------------
-    // iOS in-app AR fallback helper
-    // -----------------------------
+    // iOS in-app AR helper
     const ua = navigator.userAgent || "";
     const isIOS = /iPad|iPhone|iPod/i.test(ua);
-    // common in-app browser tokens
-    const isInApp = /(Instagram|FBAN|FBAV|FBIOS|Line|LinkedInApp|Snapchat|TikTok|Twitter|X\/|Telegram|WhatsApp|GSA|DuckDuckGo)/i.test(ua);
+    const isInApp = /(Instagram|FBAN|FBAV|FBIOS|Line|LinkedInApp|Snapchat|TikTok|Telegram|WhatsApp|GSA)/i.test(ua);
 
     if (isIOS && isInApp){
       iosHelper.classList.add("show");
     }
 
-    openUsdzBtn?.addEventListener("click", () => {
-      // best effort: open the USDZ directly (in Safari this launches Quick Look)
+    openUsdzBtn && openUsdzBtn.addEventListener("click", () => {
       window.location.href = usdzAbs;
     });
 
-    howSafariBtn?.addEventListener("click", () => {
+    howSafariBtn && howSafariBtn.addEventListener("click", () => {
       showToast("Tap Share → Open in Safari");
     });
+  </script>
 
-    // -----------------------------
-    // Live 3D background (Three.js)
-    // -----------------------------
-    import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
-    import { RoomEnvironment } from "https://unpkg.com/three@0.160.0/examples/jsm/environments/RoomEnvironment.js";
+  <!-- Background logic (MODULE) with try/catch so it can't break UI -->
+  <script type="module">
+    async function startBackground(){
+      const canvas = document.getElementById("bg3d");
+      if (!canvas) return;
 
-    const canvas = document.getElementById("bg3d");
-    const renderer = new THREE.WebGLRenderer({
-      canvas,
-      alpha: true,
-      antialias: true,
-      powerPreference: "low-power"
-    });
-    renderer.setClearColor(0x000000, 0);
+      // If WebGL is blocked, just skip quietly.
+      const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+      if (!gl) return;
 
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-    camera.position.set(0, 0, 10);
+      try{
+        const THREE = await import("https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js");
+        const { RoomEnvironment } = await import("https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/environments/RoomEnvironment.js");
 
-    // soft environment lighting (Vision-ish)
-    const pmrem = new THREE.PMREMGenerator(renderer);
-    scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+        const renderer = new THREE.WebGLRenderer({
+          canvas,
+          alpha: true,
+          antialias: true,
+          powerPreference: "low-power"
+        });
+        renderer.setClearColor(0x000000, 0);
 
-    // subtle lights
-    const key = new THREE.DirectionalLight(0xffffff, 0.8);
-    key.position.set(4, 6, 8);
-    scene.add(key);
-    const fill = new THREE.DirectionalLight(0xffffff, 0.35);
-    fill.position.set(-6, -2, 6);
-    scene.add(fill);
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+        camera.position.set(0, 0, 10);
 
-    // low poly shapes
-    const geometries = [
-      new THREE.IcosahedronGeometry(0.6, 0),
-      new THREE.BoxGeometry(1.0, 1.0, 1.0),
-      new THREE.SphereGeometry(0.7, 10, 8),
-      new THREE.DodecahedronGeometry(0.65, 0)
-    ];
+        const pmrem = new THREE.PMREMGenerator(renderer);
+        scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
 
-    // glassy-but-light material (keep it clean)
-    const baseMat = new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color(0xffffff),
-      roughness: 0.25,
-      metalness: 0.05,
-      transmission: 0.55,
-      thickness: 0.6,
-      clearcoat: 0.4,
-      clearcoatRoughness: 0.25,
-      transparent: true,
-      opacity: 0.55
-    });
+        const key = new THREE.DirectionalLight(0xffffff, 0.8);
+        key.position.set(4, 6, 8);
+        scene.add(key);
 
-    const objects = [];
-    const COUNT = 12;
+        const fill = new THREE.DirectionalLight(0xffffff, 0.35);
+        fill.position.set(-6, -2, 6);
+        scene.add(fill);
 
-    function rand(a,b){ return a + Math.random()*(b-a); }
+        const geometries = [
+          new THREE.IcosahedronGeometry(0.6, 0),
+          new THREE.BoxGeometry(1.0, 1.0, 1.0),
+          new THREE.SphereGeometry(0.7, 10, 8),
+          new THREE.DodecahedronGeometry(0.65, 0)
+        ];
 
-    for (let i=0;i<COUNT;i++){
-      const geo = geometries[Math.floor(Math.random()*geometries.length)];
-      const mat = baseMat.clone();
-      // tiny tint variations (still minimal)
-      const t = Math.random();
-      mat.color = new THREE.Color().setHSL(0.58 + t*0.08, 0.35, 0.95);
-      mat.opacity = 0.42 + Math.random()*0.16;
+        const baseMat = new THREE.MeshPhysicalMaterial({
+          color: new THREE.Color(0xffffff),
+          roughness: 0.25,
+          metalness: 0.05,
+          transmission: 0.55,
+          thickness: 0.6,
+          clearcoat: 0.4,
+          clearcoatRoughness: 0.25,
+          transparent: true,
+          opacity: 0.55
+        });
 
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.position.set(rand(-6,6), rand(-3.5,3.5), rand(-6,2));
-      mesh.rotation.set(rand(0,Math.PI), rand(0,Math.PI), rand(0,Math.PI));
-      const s = rand(0.55, 1.15);
-      mesh.scale.setScalar(s);
-      scene.add(mesh);
+        const objects = [];
+        const COUNT = 12;
+        const rand = (a,b) => a + Math.random()*(b-a);
 
-      objects.push({
-        mesh,
-        baseY: mesh.position.y,
-        speed: rand(0.25, 0.65),
-        rot: new THREE.Vector3(rand(-0.25,0.25), rand(-0.35,0.35), rand(-0.2,0.2)),
-        phase: rand(0, Math.PI*2)
-      });
-    }
+        for (let i=0;i<COUNT;i++){
+          const geo = geometries[Math.floor(Math.random()*geometries.length)];
+          const mat = baseMat.clone();
+          const t = Math.random();
+          mat.color = new THREE.Color().setHSL(0.58 + t*0.08, 0.35, 0.95);
+          mat.opacity = 0.42 + Math.random()*0.16;
 
-    // gentle parallax for camera
-    let targetX = 0, targetY = 0;
-    let curX = 0, curY = 0;
+          const mesh = new THREE.Mesh(geo, mat);
+          mesh.position.set(rand(-6,6), rand(-3.5,3.5), rand(-6,2));
+          mesh.rotation.set(rand(0,Math.PI), rand(0,Math.PI), rand(0,Math.PI));
+          const s = rand(0.55, 1.15);
+          mesh.scale.setScalar(s);
+          scene.add(mesh);
 
-    window.addEventListener("mousemove", (e) => {
-      const cx = window.innerWidth/2, cy = window.innerHeight/2;
-      targetX = ((e.clientX - cx)/cx) * 0.6;
-      targetY = ((e.clientY - cy)/cy) * 0.35;
-    }, { passive:true });
+          objects.push({
+            mesh,
+            baseY: mesh.position.y,
+            speed: rand(0.25, 0.65),
+            rot: new THREE.Vector3(rand(-0.25,0.25), rand(-0.35,0.35), rand(-0.2,0.2)),
+            phase: rand(0, Math.PI*2)
+          });
+        }
 
-    window.addEventListener("deviceorientation", (e) => {
-      const g = Math.max(-30, Math.min(30, e.gamma || 0));
-      const b = Math.max(-30, Math.min(30, e.beta || 0));
-      targetX = (g/30) * 0.6;
-      targetY = (b/30) * 0.25;
-    }, { passive:true });
+        // Camera parallax
+        let targetX = 0, targetY = 0, curX = 0, curY = 0;
 
-    function resize(){
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.6); // keep it smooth but light
-      renderer.setPixelRatio(dpr);
-      renderer.setSize(w, h, false);
-      camera.aspect = w/h;
-      camera.updateProjectionMatrix();
-    }
-    window.addEventListener("resize", resize);
-    resize();
+        window.addEventListener("mousemove", (e) => {
+          const cx = window.innerWidth/2, cy = window.innerHeight/2;
+          targetX = ((e.clientX - cx)/cx) * 0.6;
+          targetY = ((e.clientY - cy)/cy) * 0.35;
+        }, { passive:true });
 
-    let t0 = performance.now();
-    function animate(now){
-      const dt = Math.min(0.033, (now - t0)/1000);
-      t0 = now;
+        window.addEventListener("deviceorientation", (e) => {
+          const g = Math.max(-30, Math.min(30, e.gamma || 0));
+          const b = Math.max(-30, Math.min(30, e.beta || 0));
+          targetX = (g/30) * 0.6;
+          targetY = (b/30) * 0.25;
+        }, { passive:true });
 
-      // smooth camera parallax
-      curX += (targetX - curX) * 0.06;
-      curY += (targetY - curY) * 0.06;
-      camera.position.x = curX;
-      camera.position.y = -curY * 0.6;
-      camera.lookAt(0,0,0);
+        function resize(){
+          const w = window.innerWidth;
+          const h = window.innerHeight;
+          const dpr = Math.min(window.devicePixelRatio || 1, 1.6);
+          renderer.setPixelRatio(dpr);
+          renderer.setSize(w, h, false);
+          camera.aspect = w/h;
+          camera.updateProjectionMatrix();
+        }
+        window.addEventListener("resize", resize);
+        resize();
 
-      const time = now * 0.001;
+        let t0 = performance.now();
+        function animate(now){
+          const dt = Math.min(0.033, (now - t0)/1000);
+          t0 = now;
 
-      for (const o of objects){
-        const m = o.mesh;
-        m.position.y = o.baseY + Math.sin(time*o.speed + o.phase) * 0.25;
-        m.rotation.x += o.rot.x * dt;
-        m.rotation.y += o.rot.y * dt;
-        m.rotation.z += o.rot.z * dt;
+          curX += (targetX - curX) * 0.06;
+          curY += (targetY - curY) * 0.06;
+
+          camera.position.x = curX;
+          camera.position.y = -curY * 0.6;
+          camera.lookAt(0,0,0);
+
+          const time = now * 0.001;
+          for (const o of objects){
+            const m = o.mesh;
+            m.position.y = o.baseY + Math.sin(time*o.speed + o.phase) * 0.25;
+            m.rotation.x += o.rot.x * dt;
+            m.rotation.y += o.rot.y * dt;
+            m.rotation.z += o.rot.z * dt;
+          }
+
+          renderer.render(scene, camera);
+          requestAnimationFrame(animate);
+        }
+        requestAnimationFrame(animate);
+
+      }catch(err){
+        // Don't break UI if background fails
+        console.warn("3D background failed to start:", err);
       }
-
-      renderer.render(scene, camera);
-      requestAnimationFrame(animate);
     }
-    requestAnimationFrame(animate);
+
+    startBackground();
   </script>
 </body>
 </html>
