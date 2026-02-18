@@ -13,12 +13,16 @@
       --glassA: rgba(255,255,255,.12);
       --glassB: rgba(255,255,255,.06);
       --strokeA: rgba(255,255,255,.18);
+
       --text: rgba(255,255,255,.92);
       --muted: rgba(255,255,255,.62);
+
       --shadow1: 0 18px 60px rgba(0,0,0,.55);
       --shadow2: 0 30px 120px rgba(0,0,0,.72);
+
       --blur1: blur(18px);
       --blur2: blur(28px);
+
       --r1: 22px;
       --r2: 28px;
 
@@ -38,7 +42,7 @@
       overflow-x:hidden;
     }
 
-    /* Live 3D background canvas */
+    /* Live background */
     #bg3d{
       position: fixed;
       inset: 0;
@@ -49,7 +53,7 @@
       pointer-events:none;
     }
 
-    /* Soft overlay above 3D */
+    /* Vision-ish overlay tint */
     .bgOverlay{
       position: fixed;
       inset: 0;
@@ -58,7 +62,7 @@
         radial-gradient(1100px 760px at 18% 14%, rgba(120,170,255,.18), transparent 60%),
         radial-gradient(1000px 760px at 82% 26%, rgba(190,120,255,.16), transparent 60%),
         radial-gradient(1000px 760px at 42% 88%, rgba(100,255,210,.12), transparent 60%),
-        linear-gradient(180deg, rgba(7,10,18,.75), rgba(11,18,48,.78));
+        linear-gradient(180deg, rgba(7,10,18,.82), rgba(11,18,48,.82));
       pointer-events:none;
     }
 
@@ -259,10 +263,7 @@
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
     }
-    .loaderTop{
-      display:flex; align-items:center; justify-content:space-between; gap:12px;
-      margin-bottom: 12px;
-    }
+    .loaderTop{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom: 12px; }
     .loaderTitle{ font-size: 13px; color: rgba(255,255,255,.82); letter-spacing: .2px; }
     .bar{
       height: 10px;
@@ -399,36 +400,38 @@
 
   <div id="toast" class="toast">Copied</div>
 
-  <!-- UI logic (NON-module so it cannot be broken by 3D imports) -->
   <script>
-    const overlay = document.getElementById("overlay");
-    const openBtn = document.getElementById("openBtn");
-    const closeBtn = document.getElementById("closeBtn");
-    const overlayBg = document.getElementById("overlayBg");
+    // -------------------------
+    // UI + model-viewer logic
+    // -------------------------
+    var overlay = document.getElementById("overlay");
+    var openBtn = document.getElementById("openBtn");
+    var closeBtn = document.getElementById("closeBtn");
+    var overlayBg = document.getElementById("overlayBg");
 
-    const mv = document.getElementById("mv");
-    const loader = document.getElementById("loader");
-    const statusText = document.getElementById("statusText");
+    var mv = document.getElementById("mv");
+    var loader = document.getElementById("loader");
+    var statusText = document.getElementById("statusText");
 
-    const copyBtn = document.getElementById("copyBtn");
-    const shareBtn = document.getElementById("shareBtn");
+    var copyBtn = document.getElementById("copyBtn");
+    var shareBtn = document.getElementById("shareBtn");
 
-    const toast = document.getElementById("toast");
-    const barFill = document.getElementById("barFill");
+    var toast = document.getElementById("toast");
+    var barFill = document.getElementById("barFill");
 
-    const iosHelper = document.getElementById("iosHelper");
-    const openUsdzBtn = document.getElementById("openUsdzBtn");
-    const howSafariBtn = document.getElementById("howSafariBtn");
+    var iosHelper = document.getElementById("iosHelper");
+    var openUsdzBtn = document.getElementById("openUsdzBtn");
+    var howSafariBtn = document.getElementById("howSafariBtn");
 
-    const glbAbs = new URL("./models/model.glb", location.href).href;
-    const usdzAbs = new URL("./models/model.usdz", location.href).href;
+    var glbAbs = new URL("./models/model.glb", location.href).href;
+    var usdzAbs = new URL("./models/model.usdz", location.href).href;
     mv.setAttribute("src", glbAbs);
     mv.setAttribute("ios-src", usdzAbs);
 
     function showToast(text){
       toast.textContent = text;
       toast.classList.add("show");
-      setTimeout(() => toast.classList.remove("show"), 1400);
+      setTimeout(function(){ toast.classList.remove("show"); }, 1400);
     }
 
     function openViewer(){
@@ -453,220 +456,300 @@
     closeBtn.addEventListener("click", closeViewer);
     overlayBg.addEventListener("click", closeViewer);
 
-    window.addEventListener("keydown", (e) => {
+    window.addEventListener("keydown", function(e){
       if (e.key === "Escape" && overlay.classList.contains("open")) closeViewer();
     });
 
-    mv.addEventListener("progress", (e) => {
-      const p = Math.max(0.02, Math.min(1, e.detail.totalProgress || 0));
-      if (barFill) barFill.style.transform = `scaleX(${p})`;
+    mv.addEventListener("progress", function(e){
+      var p = e && e.detail && typeof e.detail.totalProgress === "number" ? e.detail.totalProgress : 0;
+      p = Math.max(0.02, Math.min(1, p));
+      if (barFill) barFill.style.transform = "scaleX(" + p + ")";
     });
 
-    mv.addEventListener("load", () => {
+    mv.addEventListener("load", function(){
       try{
         mv.cameraTarget = "auto auto auto";
         mv.cameraOrbit = "0deg 75deg 2.8m";
       }catch(_){}
       loader.classList.add("hide");
-      setTimeout(() => { loader.style.display = "none"; }, 380);
+      setTimeout(function(){ loader.style.display = "none"; }, 380);
       statusText.textContent = "Ready";
     });
 
-    mv.addEventListener("error", () => {
+    mv.addEventListener("error", function(){
       loader.classList.add("hide");
-      setTimeout(() => { loader.style.display = "none"; }, 380);
+      setTimeout(function(){ loader.style.display = "none"; }, 380);
       statusText.textContent = "Load failed";
       showToast("Model failed to load");
     });
 
-    const pageUrl = () => location.href.split("#")[0];
+    function pageUrl(){ return location.href.split("#")[0]; }
 
-    copyBtn.addEventListener("click", async () => {
-      try{
-        await navigator.clipboard.writeText(pageUrl());
-        showToast("Link copied");
-      }catch(_){
-        const ta = document.createElement("textarea");
-        ta.value = pageUrl();
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand("copy");
-        ta.remove();
-        showToast("Link copied");
+    copyBtn.addEventListener("click", function(){
+      var url = pageUrl();
+      if (navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(url).then(function(){ showToast("Link copied"); }).catch(function(){ fallbackCopy(url); });
+      }else{
+        fallbackCopy(url);
       }
     });
 
-    shareBtn.addEventListener("click", async () => {
-      const url = pageUrl();
+    function fallbackCopy(url){
+      var ta = document.createElement("textarea");
+      ta.value = url;
+      document.body.appendChild(ta);
+      ta.select();
+      try{ document.execCommand("copy"); }catch(_){}
+      ta.remove();
+      showToast("Link copied");
+    }
+
+    shareBtn.addEventListener("click", function(){
+      var url = pageUrl();
       if (navigator.share){
-        try{ await navigator.share({ title: "3D Viewer", text: "Open the 3D model", url }); }catch(_){}
+        navigator.share({ title:"3D Viewer", text:"Open the 3D model", url:url }).catch(function(){});
       }else{
-        try{ await navigator.clipboard.writeText(url); showToast("Share not available — link copied"); }catch(_){ showToast("Share not available"); }
+        // fallback = copy
+        fallbackCopy(url);
+        showToast("Share not available — link copied");
       }
     });
 
     // iOS in-app AR helper
-    const ua = navigator.userAgent || "";
-    const isIOS = /iPad|iPhone|iPod/i.test(ua);
-    const isInApp = /(Instagram|FBAN|FBAV|FBIOS|Line|LinkedInApp|Snapchat|TikTok|Telegram|WhatsApp|GSA)/i.test(ua);
-
+    var ua = navigator.userAgent || "";
+    var isIOS = /iPad|iPhone|iPod/i.test(ua);
+    var isInApp = /(Instagram|FBAN|FBAV|FBIOS|Line|LinkedInApp|Snapchat|TikTok|Telegram|WhatsApp|GSA)/i.test(ua);
     if (isIOS && isInApp){
       iosHelper.classList.add("show");
     }
+    openUsdzBtn.addEventListener("click", function(){ window.location.href = usdzAbs; });
+    howSafariBtn.addEventListener("click", function(){ showToast("Tap Share → Open in Safari"); });
 
-    openUsdzBtn && openUsdzBtn.addEventListener("click", () => {
-      window.location.href = usdzAbs;
-    });
+    // -------------------------
+    // Live background (pure JS)
+    // -------------------------
+    (function(){
+      var canvas = document.getElementById("bg3d");
+      var ctx = canvas.getContext("2d");
+      if (!ctx) return;
 
-    howSafariBtn && howSafariBtn.addEventListener("click", () => {
-      showToast("Tap Share → Open in Safari");
-    });
-  </script>
+      var w = 0, h = 0, dpr = 1;
 
-  <!-- Background logic (MODULE) with try/catch so it can't break UI -->
-  <script type="module">
-    async function startBackground(){
-      const canvas = document.getElementById("bg3d");
-      if (!canvas) return;
+      function resize(){
+        w = window.innerWidth;
+        h = window.innerHeight;
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.floor(w * dpr);
+        canvas.height = Math.floor(h * dpr);
+        canvas.style.width = w + "px";
+        canvas.style.height = h + "px";
+        ctx.setTransform(dpr,0,0,dpr,0,0);
+      }
+      window.addEventListener("resize", resize);
+      resize();
 
-      // If WebGL is blocked, just skip quietly.
-      const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
-      if (!gl) return;
+      function rand(a,b){ return a + Math.random()*(b-a); }
 
-      try{
-        const THREE = await import("https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js");
-        const { RoomEnvironment } = await import("https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/environments/RoomEnvironment.js");
+      // simple “3D” projection
+      var fov = 520; // projection factor
 
-        const renderer = new THREE.WebGLRenderer({
-          canvas,
-          alpha: true,
-          antialias: true,
-          powerPreference: "low-power"
+      // camera parallax target
+      var tx=0, ty=0, cx=0, cy=0;
+
+      window.addEventListener("mousemove", function(e){
+        var mx = (e.clientX / w) * 2 - 1;
+        var my = (e.clientY / h) * 2 - 1;
+        tx = mx * 0.8;
+        ty = my * 0.5;
+      }, {passive:true});
+
+      window.addEventListener("deviceorientation", function(e){
+        var g = Math.max(-30, Math.min(30, e.gamma || 0));
+        var b = Math.max(-30, Math.min(30, e.beta || 0));
+        tx = (g/30) * 0.8;
+        ty = (b/30) * 0.35;
+      }, {passive:true});
+
+      // low-poly “objects”
+      var objs = [];
+      var COUNT = 14;
+
+      function makeCube(size){
+        var s = size/2;
+        return {
+          type:"cube",
+          verts:[
+            [-s,-s,-s],[ s,-s,-s],[ s, s,-s],[-s, s,-s],
+            [-s,-s, s],[ s,-s, s],[ s, s, s],[-s, s, s]
+          ],
+          edges:[
+            [0,1],[1,2],[2,3],[3,0],
+            [4,5],[5,6],[6,7],[7,4],
+            [0,4],[1,5],[2,6],[3,7]
+          ]
+        };
+      }
+
+      function makeIco(size){
+        // fake “icosa” look: draw a sphere-ish wireframe
+        return { type:"sphere", r:size/2 };
+      }
+
+      for (var i=0;i<COUNT;i++){
+        var isCube = Math.random() < 0.55;
+        var size = rand(26, 54);
+        objs.push({
+          shape: isCube ? makeCube(size) : makeIco(size),
+          x: rand(-280, 280),
+          y: rand(-180, 180),
+          z: rand(-220, 120),
+          rx: rand(0, Math.PI),
+          ry: rand(0, Math.PI),
+          rz: rand(0, Math.PI),
+          vx: rand(-0.25, 0.25),
+          vy: rand(-0.18, 0.18),
+          vz: rand(-0.20, 0.20),
+          drift: rand(0.18, 0.55),
+          phase: rand(0, Math.PI*2),
+          hue: rand(200, 240),
+          alpha: rand(0.14, 0.28)
         });
-        renderer.setClearColor(0x000000, 0);
+      }
 
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-        camera.position.set(0, 0, 10);
+      function rotX(p,a){
+        var y=p[1]*Math.cos(a)-p[2]*Math.sin(a);
+        var z=p[1]*Math.sin(a)+p[2]*Math.cos(a);
+        return [p[0],y,z];
+      }
+      function rotY(p,a){
+        var x=p[0]*Math.cos(a)+p[2]*Math.sin(a);
+        var z=-p[0]*Math.sin(a)+p[2]*Math.cos(a);
+        return [x,p[1],z];
+      }
+      function rotZ(p,a){
+        var x=p[0]*Math.cos(a)-p[1]*Math.sin(a);
+        var y=p[0]*Math.sin(a)+p[1]*Math.cos(a);
+        return [x,y,p[2]];
+      }
 
-        const pmrem = new THREE.PMREMGenerator(renderer);
-        scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+      function project(x,y,z){
+        var px = (x * fov) / (fov - z);
+        var py = (y * fov) / (fov - z);
+        return [px, py];
+      }
 
-        const key = new THREE.DirectionalLight(0xffffff, 0.8);
-        key.position.set(4, 6, 8);
-        scene.add(key);
+      function clear(){
+        ctx.clearRect(0,0,w,h);
+      }
 
-        const fill = new THREE.DirectionalLight(0xffffff, 0.35);
-        fill.position.set(-6, -2, 6);
-        scene.add(fill);
+      function draw(now){
+        var t = now * 0.001;
 
-        const geometries = [
-          new THREE.IcosahedronGeometry(0.6, 0),
-          new THREE.BoxGeometry(1.0, 1.0, 1.0),
-          new THREE.SphereGeometry(0.7, 10, 8),
-          new THREE.DodecahedronGeometry(0.65, 0)
-        ];
+        // smooth parallax camera
+        cx += (tx - cx) * 0.04;
+        cy += (ty - cy) * 0.04;
 
-        const baseMat = new THREE.MeshPhysicalMaterial({
-          color: new THREE.Color(0xffffff),
-          roughness: 0.25,
-          metalness: 0.05,
-          transmission: 0.55,
-          thickness: 0.6,
-          clearcoat: 0.4,
-          clearcoatRoughness: 0.25,
-          transparent: true,
-          opacity: 0.55
-        });
+        clear();
 
-        const objects = [];
-        const COUNT = 12;
-        const rand = (a,b) => a + Math.random()*(b-a);
+        // subtle vignetting/soft fog behind shapes
+        var grd = ctx.createRadialGradient(w*0.5,h*0.5, 0, w*0.5,h*0.5, Math.max(w,h)*0.7);
+        grd.addColorStop(0, "rgba(255,255,255,0.02)");
+        grd.addColorStop(1, "rgba(0,0,0,0.0)");
+        ctx.fillStyle = grd;
+        ctx.fillRect(0,0,w,h);
 
-        for (let i=0;i<COUNT;i++){
-          const geo = geometries[Math.floor(Math.random()*geometries.length)];
-          const mat = baseMat.clone();
-          const t = Math.random();
-          mat.color = new THREE.Color().setHSL(0.58 + t*0.08, 0.35, 0.95);
-          mat.opacity = 0.42 + Math.random()*0.16;
+        // sort back-to-front by z
+        objs.sort(function(a,b){ return a.z - b.z; });
 
-          const mesh = new THREE.Mesh(geo, mat);
-          mesh.position.set(rand(-6,6), rand(-3.5,3.5), rand(-6,2));
-          mesh.rotation.set(rand(0,Math.PI), rand(0,Math.PI), rand(0,Math.PI));
-          const s = rand(0.55, 1.15);
-          mesh.scale.setScalar(s);
-          scene.add(mesh);
+        for (var i=0;i<objs.length;i++){
+          var o = objs[i];
 
-          objects.push({
-            mesh,
-            baseY: mesh.position.y,
-            speed: rand(0.25, 0.65),
-            rot: new THREE.Vector3(rand(-0.25,0.25), rand(-0.35,0.35), rand(-0.2,0.2)),
-            phase: rand(0, Math.PI*2)
-          });
-        }
+          // floating motion
+          var fy = Math.sin(t*o.drift + o.phase) * 18;
+          var fx = Math.cos(t*o.drift*0.8 + o.phase) * 10;
 
-        // Camera parallax
-        let targetX = 0, targetY = 0, curX = 0, curY = 0;
+          // rotate
+          o.rx += o.vx * 0.010;
+          o.ry += o.vy * 0.012;
+          o.rz += o.vz * 0.008;
 
-        window.addEventListener("mousemove", (e) => {
-          const cx = window.innerWidth/2, cy = window.innerHeight/2;
-          targetX = ((e.clientX - cx)/cx) * 0.6;
-          targetY = ((e.clientY - cy)/cy) * 0.35;
-        }, { passive:true });
+          // apply parallax to positions (camera shift)
+          var ox = o.x + fx + cx*80;
+          var oy = o.y + fy - cy*60;
+          var oz = o.z;
 
-        window.addEventListener("deviceorientation", (e) => {
-          const g = Math.max(-30, Math.min(30, e.gamma || 0));
-          const b = Math.max(-30, Math.min(30, e.beta || 0));
-          targetX = (g/30) * 0.6;
-          targetY = (b/30) * 0.25;
-        }, { passive:true });
+          // screen center
+          var sx0 = w/2, sy0 = h/2;
 
-        function resize(){
-          const w = window.innerWidth;
-          const h = window.innerHeight;
-          const dpr = Math.min(window.devicePixelRatio || 1, 1.6);
-          renderer.setPixelRatio(dpr);
-          renderer.setSize(w, h, false);
-          camera.aspect = w/h;
-          camera.updateProjectionMatrix();
-        }
-        window.addEventListener("resize", resize);
-        resize();
+          // style (glassy line)
+          var stroke = "hsla(" + o.hue + ", 55%, 92%, " + o.alpha + ")";
+          ctx.lineWidth = 1.2;
+          ctx.strokeStyle = stroke;
+          ctx.shadowColor = "rgba(255,255,255,0.18)";
+          ctx.shadowBlur = 10;
 
-        let t0 = performance.now();
-        function animate(now){
-          const dt = Math.min(0.033, (now - t0)/1000);
-          t0 = now;
+          if (o.shape.type === "cube"){
+            var pts = [];
+            for (var v=0; v<o.shape.verts.length; v++){
+              var p = o.shape.verts[v];
+              p = rotX(p, o.rx);
+              p = rotY(p, o.ry);
+              p = rotZ(p, o.rz);
 
-          curX += (targetX - curX) * 0.06;
-          curY += (targetY - curY) * 0.06;
+              var pr = project(p[0] + ox, p[1] + oy, p[2] + oz);
+              pts.push([sx0 + pr[0], sy0 + pr[1]]);
+            }
 
-          camera.position.x = curX;
-          camera.position.y = -curY * 0.6;
-          camera.lookAt(0,0,0);
+            ctx.beginPath();
+            for (var e=0; e<o.shape.edges.length; e++){
+              var a = o.shape.edges[e][0];
+              var b = o.shape.edges[e][1];
+              ctx.moveTo(pts[a][0], pts[a][1]);
+              ctx.lineTo(pts[b][0], pts[b][1]);
+            }
+            ctx.stroke();
 
-          const time = now * 0.001;
-          for (const o of objects){
-            const m = o.mesh;
-            m.position.y = o.baseY + Math.sin(time*o.speed + o.phase) * 0.25;
-            m.rotation.x += o.rot.x * dt;
-            m.rotation.y += o.rot.y * dt;
-            m.rotation.z += o.rot.z * dt;
+            // tiny fill glow
+            ctx.shadowBlur = 18;
+            ctx.globalAlpha = 0.12;
+            ctx.fillStyle = "rgba(255,255,255,0.08)";
+            ctx.beginPath();
+            ctx.moveTo(pts[0][0], pts[0][1]);
+            ctx.lineTo(pts[1][0], pts[1][1]);
+            ctx.lineTo(pts[2][0], pts[2][1]);
+            ctx.lineTo(pts[3][0], pts[3][1]);
+            ctx.closePath();
+            ctx.fill();
+            ctx.globalAlpha = 1;
+
+          } else {
+            // sphere-like: draw 3 rings (wireframe)
+            var r = o.shape.r;
+            var pr0 = project(ox, oy, oz);
+            var depthScale = (fov) / (fov - oz);
+            var rr = r * depthScale;
+
+            ctx.beginPath();
+            ctx.ellipse(sx0 + pr0[0], sy0 + pr0[1], rr, rr*0.72, o.rz, 0, Math.PI*2);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.ellipse(sx0 + pr0[0], sy0 + pr0[1], rr*0.72, rr, o.ry, 0, Math.PI*2);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.ellipse(sx0 + pr0[0], sy0 + pr0[1], rr*0.85, rr*0.85, o.rx, 0, Math.PI*2);
+            ctx.stroke();
           }
 
-          renderer.render(scene, camera);
-          requestAnimationFrame(animate);
+          ctx.shadowBlur = 0;
         }
-        requestAnimationFrame(animate);
 
-      }catch(err){
-        // Don't break UI if background fails
-        console.warn("3D background failed to start:", err);
+        requestAnimationFrame(draw);
       }
-    }
 
-    startBackground();
+      requestAnimationFrame(draw);
+    })();
   </script>
 </body>
 </html>
